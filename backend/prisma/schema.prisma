@@ -1,0 +1,520 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary" // fuerza engine de Node
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum BusinessStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  BLOCKED
+}
+
+enum PlaceStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  BLOCKED
+}
+
+enum PlaceReportStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PlanStatus {
+  DRAFT
+  OPEN
+  FINALIZED
+  CANCELED
+  BLOCKED
+}
+
+enum PlanMemberRole {
+  OWNER
+  MEMBER
+}
+
+enum TransportMode {
+  WALK
+  BIKE
+  CAR
+  MOTORCYCLE
+  PUBLIC_TRANSPORT
+  TAXI
+  RIDE_SHARE
+}
+
+enum PlanJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+}
+
+enum PriceLevel {
+  FREE
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ForumTopicStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum NotificationType {
+  FORUM_REPLY
+  PLAN_JOIN_REQUEST
+  PLAN_JOIN_APPROVED
+  BUSINESS_STATUS_CHANGED
+  PLACE_REPORT_RESOLVED
+}
+
+model User {
+  id           String            @id @default(uuid()) @db.Uuid
+  email        String            @unique
+  passwordHash String
+  name         String?
+  role         UserRole          @default(USER)
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  plansCreated Plan[]            @relation("PlansCreated")
+  memberships  PlanMember[]
+  optionsMade  PlanOption[]      @relation("OptionsCreatedBy")
+  votes        PlanOptionVote[]
+
+  businessesOwned Business[]     @relation("BusinessesOwned")
+  businessPosts   BusinessPost[] @relation("BusinessPostsCreatedBy")
+
+  placesSuggested Place[]        @relation("PlacesSuggestedBy")
+  placeFavorites  PlaceFavorite[]
+  planFavorites   PlanFavorite[]
+
+  interests       UserInterest[]
+
+  placeReviews PlaceReview[]
+  placeReports PlaceReport[]     @relation("PlaceReportsCreatedBy")
+  placeReportsResolved PlaceReport[] @relation("PlaceReportsResolvedBy")
+
+  forumTopics   ForumTopic[]
+  forumComments ForumComment[]
+
+  planJoinRequests PlanJoinRequest[]
+  notifications Notification[]
+  checkIns PlaceCheckIn[]
+}
+
+model Business {
+  id          String         @id @default(uuid()) @db.Uuid
+  name        String         @db.VarChar(140)
+  description String?
+  status      BusinessStatus @default(PENDING)
+
+  ownerId     String         @db.Uuid
+  owner       User           @relation("BusinessesOwned", fields: [ownerId], references: [id], onDelete: Restrict)
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  posts       BusinessPost[]
+  places      Place[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model BusinessPost {
+  id          String    @id @default(uuid()) @db.Uuid
+  businessId  String    @db.Uuid
+  title       String    @db.VarChar(160)
+  content     String
+
+  createdById String?   @db.Uuid
+  createdBy   User?     @relation("BusinessPostsCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([businessId])
+  @@index([createdById])
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(80)
+
+  createdAt DateTime @default(now())
+
+  places    PlaceCategory[]
+}
+
+model Interest {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(80)
+
+  createdAt DateTime @default(now())
+
+  users     UserInterest[]
+  places    PlaceInterest[]
+}
+
+model UserInterest {
+  userId     String   @db.Uuid
+  interestId String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interest   Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([userId, interestId])
+  @@index([interestId])
+}
+
+model Place {
+  id               String      @id @default(uuid()) @db.Uuid
+  name             String      @db.VarChar(160)
+  description      String?
+  address          String?
+
+  latitude         Float?
+  longitude        Float?
+  priceLevel       PriceLevel?
+  avgCostCents     Int?
+  openingHoursText String?
+  phone            String?
+  websiteUrl       String?
+
+  status           PlaceStatus @default(PENDING)
+
+  businessId       String?     @db.Uuid
+  business         Business?   @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  suggestedById    String?     @db.Uuid
+  suggestedBy      User?       @relation("PlacesSuggestedBy", fields: [suggestedById], references: [id], onDelete: SetNull)
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  photos           PlacePhoto[]
+  categories       PlaceCategory[]
+  interests        PlaceInterest[]
+  reviews          PlaceReview[]
+  reports          PlaceReport[]
+  favorites        PlaceFavorite[]
+  checkIns         PlaceCheckIn[]
+
+  planStops        PlanStop[]
+
+  @@index([businessId])
+  @@index([suggestedById])
+  @@index([status])
+}
+
+model PlacePhoto {
+  id        String   @id @default(uuid()) @db.Uuid
+  placeId   String   @db.Uuid
+  url       String
+  position  Int      @default(0)
+
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([placeId])
+}
+
+model PlaceCategory {
+  placeId    String   @db.Uuid
+  categoryId String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  place      Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([placeId, categoryId])
+  @@index([categoryId])
+}
+
+model PlaceInterest {
+  placeId    String   @db.Uuid
+  interestId String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  place      Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  interest   Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([placeId, interestId])
+  @@index([interestId])
+}
+
+model PlaceReview {
+  id        String   @id @default(uuid()) @db.Uuid
+  placeId   String   @db.Uuid
+  userId    String   @db.Uuid
+  rating    Int
+  comment   String?
+
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([placeId, userId])
+  @@index([userId])
+  @@index([placeId])
+}
+
+model PlaceReport {
+  id           String            @id @default(uuid()) @db.Uuid
+  placeId      String            @db.Uuid
+  createdById  String            @db.Uuid
+  reason       String            @db.VarChar(140)
+  comment      String?
+  status       PlaceReportStatus @default(PENDING)
+
+  resolvedAt   DateTime?
+  resolvedById String?           @db.Uuid
+
+  place        Place             @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  createdBy    User              @relation("PlaceReportsCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  resolvedBy   User?             @relation("PlaceReportsResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([placeId])
+  @@index([createdById])
+  @@index([resolvedById])
+  @@index([status])
+}
+
+model PlaceFavorite {
+  userId    String   @db.Uuid
+  placeId   String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, placeId])
+  @@index([placeId])
+}
+
+model PlaceCheckIn {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  placeId   String   @db.Uuid
+  note      String?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([placeId])
+}
+
+model Plan {
+  id          String       @id @default(uuid()) @db.Uuid
+  title       String       @db.VarChar(120)
+  description String?
+  status      PlanStatus   @default(OPEN)
+  eventAt     DateTime?
+  peopleCount Int          @default(1)
+  budgetCents Int?
+  isOpen      Boolean      @default(false)
+
+  createdById String       @db.Uuid
+  createdBy   User         @relation("PlansCreated", fields: [createdById], references: [id], onDelete: Restrict)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  members     PlanMember[]
+  options     PlanOption[]
+  transports  PlanTransport[]
+  stops       PlanStop[]
+  favorites   PlanFavorite[]
+  joinRequests PlanJoinRequest[]
+
+  @@index([createdById])
+  @@index([status])
+}
+
+model PlanMember {
+  planId   String          @db.Uuid
+  userId   String          @db.Uuid
+  role     PlanMemberRole  @default(MEMBER)
+  joinedAt DateTime        @default(now())
+
+  plan     Plan            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([planId, userId])
+  @@index([userId])
+}
+
+model PlanTransport {
+  planId    String        @db.Uuid
+  mode      TransportMode
+  createdAt DateTime      @default(now())
+
+  plan      Plan          @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@id([planId, mode])
+}
+
+model PlanStop {
+  id         String   @id @default(uuid()) @db.Uuid
+  planId     String   @db.Uuid
+  placeId    String   @db.Uuid
+  position   Int
+  note       String?
+  scheduledAt DateTime?
+
+  plan       Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  place      Place    @relation(fields: [placeId], references: [id], onDelete: Restrict)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([planId, position])
+  @@index([placeId])
+  @@index([planId])
+}
+
+model PlanOption {
+  id          String          @id @default(uuid()) @db.Uuid
+  planId      String          @db.Uuid
+  text        String          @db.VarChar(200)
+  details     String?
+
+  createdById String?         @db.Uuid
+  createdBy   User?           @relation("OptionsCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  plan        Plan            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  votes       PlanOptionVote[]
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([planId])
+  @@index([createdById])
+}
+
+model PlanOptionVote {
+  optionId  String     @db.Uuid
+  userId    String     @db.Uuid
+  createdAt DateTime   @default(now())
+
+  option    PlanOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([optionId, userId])
+  @@index([userId])
+}
+
+model PlanFavorite {
+  userId    String   @db.Uuid
+  planId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@id([userId, planId])
+  @@index([planId])
+}
+
+model PlanJoinRequest {
+  id        String                 @id @default(uuid()) @db.Uuid
+  planId    String                 @db.Uuid
+  userId    String                 @db.Uuid
+  status    PlanJoinRequestStatus  @default(PENDING)
+
+  plan      Plan                   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  @@unique([planId, userId])
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+}
+
+model ForumTopic {
+  id        String           @id @default(uuid()) @db.Uuid
+  title     String           @db.VarChar(160)
+  content   String
+  status    ForumTopicStatus @default(ACTIVE)
+
+  authorId  String           @db.Uuid
+  author    User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  comments  ForumComment[]
+
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([authorId])
+  @@index([status])
+}
+
+model ForumComment {
+  id        String        @id @default(uuid()) @db.Uuid
+  topicId   String        @db.Uuid
+  authorId  String        @db.Uuid
+  content   String
+
+  parentId  String?       @db.Uuid
+  parent    ForumComment? @relation("ForumCommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   ForumComment[] @relation("ForumCommentThread")
+
+  topic     ForumTopic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([topicId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  data      Json
+
+  readAt    DateTime?
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([type])
+}
+

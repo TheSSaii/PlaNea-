@@ -1,0 +1,112 @@
+# ------------------------------------------------------------
+# Root .gitignore (monorepo: /backend + /frontend)
+# Covers: Node/TypeScript, Prisma, Docker, OS, IDE, tests, logs
+# ------------------------------------------------------------
+
+# Dependencies
+**/node_modules/
+**/.pnp/
+**/.pnp.cjs
+
+# Package manager artifacts (keep lockfiles committed when present)
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+**/lerna-debug.log*
+
+# Logs
+logs/
+*.log
+
+# Build outputs
+**/dist/
+**/dist-ssr/
+**/build/
+**/out/
+**/.next/
+**/.nuxt/
+**/.svelte-kit/
+**/.cache/
+**/.parcel-cache/
+**/.turbo/
+**/.swc/
+**/.vite/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+**/.tmp/
+**/node_modules/.tmp/
+
+# Test coverage
+coverage/
+**/coverage/
+.nyc_output/
+
+# Runtime / process artifacts
+*.pid
+*.pid.lock
+*.seed
+
+# Environment files (never commit secrets)
+.env
+.env.*
+!*.example
+!**/*.example
+
+# Prisma
+# - generated engines + client are under node_modules; ignore prisma client cache folders too
+**/node_modules/.prisma/
+**/node_modules/@prisma/client/
+**/.prisma/
+# Local DB files (in case a dev switches datasource to sqlite)
+**/*.db
+**/*.db-journal
+**/*.sqlite
+**/*.sqlite3
+
+# Docker / Compose overrides
+docker-compose.override.yml
+docker-compose.*.override.yml
+docker-compose.*.local.yml
+.docker/
+
+# Editor / IDE
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Windows shortcuts / installers
+*.lnk
+*.msi
+*.msix
+*.msixbundle
+*.appx
+*.appxbundle
+
+# macOS / Linux temp
+*.swp
+*.swo
+*~
+
+# Certificates / keys (common sensitive artifacts)
+*.pem
+*.key
+*.crt
+*.pfx

@@ -56,6 +56,7 @@ enum TransportMode {
   RIDE_SHARE
 }
 
+
 enum PlanJoinRequestStatus {
   PENDING
   APPROVED
@@ -353,11 +354,26 @@ model Plan {
   options     PlanOption[]
   transports  PlanTransport[]
   stops       PlanStop[]
+  subplans    Subplan[]
   favorites   PlanFavorite[]
   joinRequests PlanJoinRequest[]
 
   @@index([createdById])
   @@index([status])
+}
+
+model Subplan {
+  id        String   @id @default(uuid()) @db.Uuid
+  placeName String
+  placeId   String?
+  order     Int
+  notes     String?
+  planId    String   @db.Uuid
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([planId])
 }
 
 model PlanMember {

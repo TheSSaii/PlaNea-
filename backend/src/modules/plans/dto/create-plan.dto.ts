@@ -3,12 +3,14 @@ import {
   IsEnum, IsDateString, Min
 } from 'class-validator';
 
-export enum TransportType {
-  WALKING  = 'WALKING',
-  PUBLIC   = 'PUBLIC',
-  CAR      = 'CAR',
-  BICYCLE  = 'BICYCLE',
-  MIXED    = 'MIXED',
+export enum TransportMode {
+  WALK = 'WALK',
+  BIKE = 'BIKE',
+  CAR = 'CAR',
+  MOTORCYCLE = 'MOTORCYCLE',
+  PUBLIC_TRANSPORT = 'PUBLIC_TRANSPORT',
+  TAXI = 'TAXI',
+  RIDE_SHARE = 'RIDE_SHARE'
 }
 
 export class CreatePlanDto {
@@ -23,8 +25,8 @@ export class CreatePlanDto {
   @Min(0)
   budget!: number;           // ← el !
 
-  @IsEnum(TransportType)
-  transport!: TransportType; // ← el !
+  @IsEnum(TransportMode)
+  transport!: TransportMode; // ← el !
 
   @IsDateString()
   scheduledAt!: string;      // ← el !

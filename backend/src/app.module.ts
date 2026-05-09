@@ -1,6 +1,7 @@
 import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
 import * as Joi from 'joi';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import * as Joi from 'joi';
           .default('development'),
       }),
     }),
+    PrismaModule,
   ],
 })
 export class AppModule {}

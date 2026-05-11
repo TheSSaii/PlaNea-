@@ -1,61 +1,76 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service'; // <-- Ojo: Asegúrate de que esta ruta sea la correcta
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
+// Importamos el Enum nativo generado por Prisma
+import { PlanStatus } from '@prisma/client';
 
-const MOCK_USER_ID = 'mock-user-001';
+// ⚠️ NOTA IMPORTANTE: En tu nuevo esquema, 'createdById' es un UUID. 
+// Cuando vayas a probar creando, esto lanzará un error si 'mock-user-001' no tiene formato UUID
+// Te sugiero cambiar esto luego por el ID real del usuario o un UUID de prueba.
+const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 @Injectable()
 export class PlansService {
   constructor(private prisma: PrismaService) {}
 
-  private calcStatus(date: Date) {
-    return date > new Date() ? 'FUTURE' : 'PAST';
+  // Adaptamos la lógica para usar el Enum de Prisma (OPEN o FINALIZED)
+  private calcStatus(date: Date): PlanStatus {
+    return date > new Date() ? PlanStatus.OPEN : PlanStatus.FINALIZED;
   }
 
-  async create(dto: CreatePlanDto) {
-    const scheduledAt = new Date(dto.scheduledAt);
+  async create(dto: CreatePlanDto | any) {
+    // Usamos eventAt en lugar de scheduledAt
+    const eventAt = dto.scheduledAt ? new Date(dto.scheduledAt) : undefined;
+    
     return this.prisma.plan.create({
       data: {
-        userId: MOCK_USER_ID,
-        name: dto.name,
-        numberOfPeople: dto.numberOfPeople,
-        budget: dto.budget,
-        transport: dto.transport,
-        scheduledAt,
-        status: this.calcStatus(scheduledAt),
+        createdById: MOCK_USER_ID,                 // Antes userId
+        title: dto.name || dto.title,              // Antes name
+        peopleCount: dto.numberOfPeople || 1,      // Antes numberOfPeople
+        budgetCents: dto.budget || 0,              // Antes budget
+        eventAt: eventAt,                          // Antes scheduledAt
+        status: eventAt ? this.calcStatus(eventAt) : PlanStatus.OPEN,
+        // transport: dto.transport <-- Eliminado porque en tu nuevo esquema es una relación con PlanTransport
       },
       include: { subplans: { orderBy: { order: 'asc' } } },
     });
   }
 
-  async findAll(status?: string) {
+  async findAll(status?: PlanStatus) {
     return this.prisma.plan.findMany({
       where: {
-        userId: MOCK_USER_ID,
-        ...(status ? { status: status as any } : {}),
+        createdById: MOCK_USER_ID,
+        ...(status ? { status } : {}),
       },
       include: { subplans: { orderBy: { order: 'asc' } } },
-      orderBy: { scheduledAt: 'desc' },
+      orderBy: { eventAt: 'desc' }, // Antes scheduledAt
     });
   }
 
   async findOne(id: string) {
     const plan = await this.prisma.plan.findFirst({
-      where: { id, userId: MOCK_USER_ID },
+      where: { id, createdById: MOCK_USER_ID }, // Antes userId
       include: { subplans: { orderBy: { order: 'asc' } } },
     });
     if (!plan) throw new NotFoundException(`Plan ${id} no encontrado`);
     return plan;
   }
 
-  async update(id: string, dto: UpdatePlanDto) {
+  async update(id: string, dto: UpdatePlanDto | any) {
     await this.findOne(id);
-    const data: any = { ...dto };
+    
+    // Mapeamos los datos viejos a los nuevos nombres temporalmente
+    const data: any = {};
+    if (dto.name) data.title = dto.name;
+    if (dto.numberOfPeople) data.peopleCount = dto.numberOfPeople;
+    if (dto.budget) data.budgetCents = dto.budget;
+
     if (dto.scheduledAt) {
-      data.scheduledAt = new Date(dto.scheduledAt);
-      data.status = this.calcStatus(data.scheduledAt);
+      data.eventAt = new Date(dto.scheduledAt);
+      data.status = this.calcStatus(data.eventAt);
     }
+
     return this.prisma.plan.update({
       where: { id },
       data,

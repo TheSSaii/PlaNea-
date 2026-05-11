@@ -1,80 +1,143 @@
 /**
- * MODULE: AuthModule
+ * CONTROLLER LAYER: AuthController
  *
- * Agrupa toda la funcionalidad de autenticación
- * - Controllers: ExponeHTTP endpoints (/auth/login, /auth/register)
- * - Services: Lógica de negocio (bcrypt, JWT)
- * - Imports: Dependencias internas (UsersModule, JwtModule) y configuración
+ * Expone endpoints HTTP para autenticación (login y registro)
+ * No contiene lógica de negocio, solo orquesta llamadas a servicio
  *
+ * RUTA BASE: /auth
  * RESPONSABILIDADES:
- * - Exportar AuthService para que otros módulos lo usen
- * - Configurar JWT con valores del .env
- * - Exponer endpoints de autenticación
+ * - Mapear rutas HTTP a métodos
+ * - Validar DTOs de entrada (email, password, name)
+ * - Llamar al servicio con datos validados
+ * - Retornar tokens y datos de usuario
  *
- * CONEXIONES CON OTROS MÓDULOS:
- * - Importa UsersModule (para gestionar usuarios)
- * - Importa JwtModule (para generar tokens)
+ * FLUJO:
+ * HTTP Request → Validación (DTOs) → Controller → AuthService → UsersService → BD
  */
 
-import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import type { SignOptions } from 'jsonwebtoken';
-import { AppConfigService } from '../../config/app-config.service';
-import { AuthController } from './auth.controller';
+import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UsersModule } from '../users/users.module';
+import { RegisterAuthDto } from './dto/register-auth.dto';
+import { LoginAuthDto } from './dto/login-auth.dto';
 
 /**
- * CONFIGURACIÓN: AuthModule
+ * CONTROLADOR: AuthController
+ * @Controller('auth') - Prefijo de ruta: /auth
  */
-@Module({
+@Controller('auth')
+export class AuthController {
   /**
-   * IMPORTS: Módulos y servicios que este módulo necesita
-   *
-   * UsersModule:
-   * - Proporciona: UsersService (gestión de usuarios en BD)
-   * - Razón: AuthService necesita crear/buscar usuarios
-   *
-   * JwtModule.registerAsync():
-   * - Crea JwtService inyectable
-   * - registerAsync(): espera a que AppConfigService esté listo
-   * - useFactory: función que retorna config de JWT
-   *
-   * CONFIGURACIÓN JWT (del .env vía AppConfigService):
-   * - secret: JWT_SECRET (clave para firmar tokens)
-   * - signOptions.expiresIn: JWT_EXPIRES_IN (ej: "1d")
-   * - Estos valores vienen de archivo de configuración
+   * Inyección de dependencias
+   * NestJS instancia automáticamente AuthService y lo inyecta
    */
-  imports: [
-    UsersModule,
-    JwtModule.registerAsync({
-      inject: [AppConfigService],  // Inyecta servicio de configuración
-      useFactory: (configService: AppConfigService) => ({
-        secret: configService.auth.jwtSecret,
-        signOptions: {
-          expiresIn: configService.auth.jwtExpiresIn as SignOptions['expiresIn'],
-        },
-      }),
-    }),
-  ],
+  constructor(private readonly authService: AuthService) {}
 
   /**
-   * CONTROLLERS: Endpoints HTTP expuestos por este módulo
-   * - AuthController: POST /auth/register, POST /auth/login
+   * ENDPOINT: POST /auth/register
+   *
+   * Registra un nuevo usuario en el sistema
+   *
+   * FLUJO:
+   * 1. Body valida contra RegisterAuthDto (class-validator)
+   * 2. Llama authService.register() que:
+   *    - Hash bcrypt de contraseña (10 rounds)
+   *    - Crea usuario en BD (valida email único)
+   *    - Genera JWT token
+   * 3. Retorna { user, accessToken }
+   *
+   * VALIDACIONES (RegisterAuthDto):
+   * - email: formato válido @IsEmail()
+   * - password: 4-12 caracteres @MinLength(4) @MaxLength(12)
+   * - name: 2-80 caracteres, requerido @MinLength(2) @MaxLength(80)
+   *
+   * Si validación falla: 400 Bad Request con detalles
+   *
+   * ERRORES ESPERADOS:
+   * - 400 Bad Request: Datos inválidos según DTO
+   * - 409 Conflict: Email ya registrado (ConflictException)
+   *
+   * @param userObject DTO validado con email, password, name
+   * @returns { user: datos públicos, accessToken: JWT }
+   *
+   * PAYLOAD ESPERADO:
+   * {
+   *   "email": "john@example.com",
+   *   "password": "mySecurePass123",
+   *   "name": "John Doe"
+   * }
+   *
+   * RESPUESTA 201:
+   * {
+   *   "user": {
+   *     "id": "550e8400-e29b-41d4-a716-446655440000",
+   *     "email": "john@example.com",
+   *     "name": "John Doe",
+   *     "role": "user",
+   *     "createdAt": "2026-04-29T10:00:00Z",
+   *     "updatedAt": "2026-04-29T10:00:00Z"
+   *   },
+   *   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
    */
-  controllers: [AuthController],
+  @Post('register')
+  registerUser(@Body() userObject: RegisterAuthDto) {
+    return this.authService.register(userObject);
+  }
 
   /**
-   * PROVIDERS: Servicios que viven en este módulo
-   * - AuthService: Lógica de autenticación (se inyecta en controller)
+   * ENDPOINT: POST /auth/login
+   *
+   * Autentica un usuario existente
+   *
+   * FLUJO:
+   * 1. Body valida contra LoginAuthDto (class-validator)
+   * 2. Llama authService.login() que:
+   *    - Busca usuario por email en BD
+   *    - Compara contraseña con bcrypt.compare() (timing-safe)
+   *    - Si válida: genera JWT token
+   *    - Si inválida: lanza UnauthorizedException
+   * 3. Retorna { user, accessToken }
+   *
+   * VALIDACIONES (LoginAuthDto):
+   * - email: formato válido @IsEmail()
+   * - password: 4-12 caracteres @MinLength(4) @MaxLength(12)
+   *
+   * Si validación falla: 400 Bad Request con detalles
+   *
+   * ERRORES ESPERADOS:
+   * - 400 Bad Request: Datos inválidos según DTO
+   * - 401 Unauthorized: Email no existe o password incorrecto
+   *   (mismo mensaje genérico por seguridad)
+   *
+   * @param userObjectLogin DTO validado con email, password
+   * @returns { user: datos públicos, accessToken: JWT }
+   *
+   * PAYLOAD ESPERADO:
+   * {
+   *   "email": "john@example.com",
+   *   "password": "mySecurePass123"
+   * }
+   *
+   * RESPUESTA 200:
+   * {
+   *   "user": {
+   *     "id": "550e8400-e29b-41d4-a716-446655440000",
+   *     "email": "john@example.com",
+   *     "name": "John Doe",
+   *     "role": "user",
+   *     "createdAt": "2026-04-29T10:00:00Z",
+   *     "updatedAt": "2026-04-29T10:00:00Z"
+   *   },
+   *   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   * }
+   *
+   * FLUJO DE CLIENTE DESPUÉS:
+   * 1. Almacena accessToken (sessionStorage, localStorage)
+   * 2. Envía en requests futuros: Authorization: Bearer <token>
+   * 3. Servidor valida token con JwtAuthGuard (si aplica)
    */
-  providers: [AuthService],
-
-  /**
-   * EXPORTS: Servicios que otros módulos pueden importar
-   * - Actualmente NO exporta nada (AuthService es interno)
-   * - Si otro módulo necesitara AuthService, iría aquí
-   * - Ejemplo: exports: [AuthService]
-   */
-})
-export class AuthModule {}
+  @Post('login')
+  loginUser(@Body() userObjectLogin: LoginAuthDto) {
+    return this.authService.login(userObjectLogin);
+  }
+}

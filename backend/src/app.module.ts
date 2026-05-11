@@ -1,7 +1,13 @@
 import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
 import * as Joi from 'joi';
+
 import { PrismaModule } from './prisma/prisma.module';
+
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { PlansModule } from './modules/plans/plans.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -16,7 +22,13 @@ import { PrismaModule } from './prisma/prisma.module';
           .default('development'),
       }),
     }),
+
     PrismaModule,
+
+    AuthModule,
+    UsersModule,
+    PlansModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

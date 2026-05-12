@@ -27,7 +27,7 @@ export default function ForumPage() {
       <div className="bg-white px-4 pt-12 pb-4 flex items-center justify-between shadow-sm">
         <h1 className="text-lg font-bold text-gray-900">Comunidad</h1>
         <button
-          onClick={() => navigate('/forum/new')}
+          onClick={() => navigate('/new')}
           className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-2xl hover:bg-blue-700 active:scale-95 transition-all">
           + Crear tema
         </button>
@@ -42,26 +42,24 @@ export default function ForumPage() {
           </div>
         ) : (
           topics.map(topic => (
-            <div key={topic.id} onClick={() => navigate(`/forum/topic/${topic.id}`)}
+            <div key={topic.id} onClick={() => navigate(`/topic/${topic.id}`)}
               className="card cursor-pointer hover:shadow-md transition-all active:scale-95">
 
-              {/* Imagen si existe */}
               {topic.imageUrl && (
                 <img
-                  src={`http://localhost:3000${topic.imageUrl}`}
+                  src={`${import.meta.env.VITE_API_URL ?? 'http://localhost:3000'}${topic.imageUrl}`}
                   alt="imagen del topic"
                   className="w-full object-cover max-h-48 rounded-t-2xl"
                 />
               )}
 
               <div className="p-4">
-                {/* Autor */}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
-                    {topic.author?.[0]?.toUpperCase() ?? '?'}
+                    {topic.author?.name?.[0]?.toUpperCase() ?? '?'}
                   </div>
                   <div>
-                    <p className="font-semibold text-sm text-gray-900">{topic.author}</p>
+                    <p className="font-semibold text-sm text-gray-900">{topic.author?.name ?? 'Anónimo'}</p>
                     <p className="text-xs text-gray-400">
                       {new Date(topic.createdAt).toLocaleDateString('es-CO', {
                         day: 'numeric', month: 'short',
@@ -71,13 +69,11 @@ export default function ForumPage() {
                   </div>
                 </div>
 
-                {/* Contenido */}
                 <h2 className="font-semibold text-gray-900 text-sm mb-1">{topic.title}</h2>
                 <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">{topic.content}</p>
 
-                {/* Footer */}
                 <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
-                  <span className="text-xs text-gray-400">🤍 Me gusta</span>
+                  <span className="text-xs text-gray-400">🤍 {topic.likes?.length ?? 0} Me gusta</span>
                   <span className="text-xs text-gray-400">💬 {topic.comments?.length ?? 0} comentarios</span>
                 </div>
               </div>
@@ -87,7 +83,7 @@ export default function ForumPage() {
       </div>
 
       {/* Botón flotante */}
-      <button onClick={() => navigate('/forum/new')}
+      <button onClick={() => navigate('/new')}
         className="fixed bottom-24 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-blue-700 active:scale-95 transition-all">
         +
       </button>

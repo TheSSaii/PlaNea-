@@ -3,8 +3,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
 
-const MOCK_USER_ID = 'mock-user-001';
-
 @Injectable()
 export class PlansService {
   constructor(private prisma: PrismaService) {}
@@ -31,32 +29,35 @@ export class PlansService {
   }
 
   async findAll(status?: string) {
+    // Construimos el filtro dinámicamente. Si mandan status, lo filtramos, si no, trae todo.
+    const whereClause = status ? { status: status as any } : {};
+
     return this.prisma.plan.findMany({
-      where: {
-        createdById: MOCK_USER_ID,
-        ...(status ? { status: status as any } : {}),
-      },
-      include: { subplans: { orderBy: { order: 'asc' } } },
+      where: whereClause,
       orderBy: { eventAt: 'desc' },
     });
   }
 
   async findOne(id: string) {
-    const plan = await this.prisma.plan.findFirst({
-      where: { id, createdById: MOCK_USER_ID },
+    const plan = await this.prisma.plan.findUnique({
+      where: { id },
       include: { subplans: { orderBy: { order: 'asc' } } },
     });
+    
     if (!plan) throw new NotFoundException(`Plan ${id} no encontrado`);
     return plan;
   }
 
   async update(id: string, dto: UpdatePlanDto) {
+    // Verificamos que el plan exista antes de actualizar
     await this.findOne(id);
+    
     const data: any = { ...dto };
     if (dto.eventAt) {
       data.eventAt = new Date(dto.eventAt);
       data.status = this.calcStatus(data.eventAt);
     }
+    
     return this.prisma.plan.update({
       where: { id },
       data,
@@ -65,7 +66,9 @@ export class PlansService {
   }
 
   async remove(id: string) {
+    // Verificamos que el plan exista antes de eliminar
     await this.findOne(id);
+    
     await this.prisma.plan.delete({ where: { id } });
   }
 }

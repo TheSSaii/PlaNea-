@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Topic, BlockedUser } from '../types/forum.types'
+import type { Topic, BlockedUser } from '../../types/forum.types'
 import {
   getAllTopics, deleteTopic, getBlockedUsers,
   unblockUser, blockUser, deleteComment
-} from '../services/api'
+} from '../../services/api'
 
 const ADMIN_PASSWORD = 'admin123'
 
@@ -41,14 +41,14 @@ export default function AdminPage() {
     setTimeout(() => setMessage(''), 3000)
   }
 
-  const handleDeleteTopic = async (id: number) => {
+  const handleDeleteTopic = async (id: string) => {
     if (!confirm('¿Seguro que quieres eliminar este tema?')) return
     await deleteTopic(id)
     setTopics(prev => prev.filter(t => t.id !== id))
     showMessage('Tema eliminado correctamente')
   }
 
-  const handleDeleteComment = async (topicId: number, commentId: number) => {
+  const handleDeleteComment = async (topicId: string, commentId: string) => {
     if (!confirm('¿Seguro que quieres eliminar este comentario?')) return
     await deleteComment(topicId, commentId)
     setTopics(prev => prev.map(t =>
@@ -74,7 +74,6 @@ export default function AdminPage() {
     showMessage(`Usuario ${username} desbloqueado`)
   }
 
-  // Vista de login
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -86,7 +85,6 @@ export default function AdminPage() {
             <h1 className="text-xl font-bold text-gray-900">Panel Admin</h1>
             <p className="text-sm text-gray-400 mt-1">Foro Comunidad</p>
           </div>
-
           <div className="flex flex-col gap-3">
             <input
               type="password"
@@ -99,12 +97,8 @@ export default function AdminPage() {
             {passwordError && (
               <p className="text-xs text-red-500 text-center">{passwordError}</p>
             )}
-            <button onClick={handleLogin} className="btn-primary">
-              Entrar
-            </button>
-            <button onClick={() => navigate('/')} className="btn-secondary">
-              Volver al foro
-            </button>
+            <button onClick={handleLogin} className="btn-primary">Entrar</button>
+            <button onClick={() => navigate('/')} className="btn-secondary">Volver al foro</button>
           </div>
         </div>
       </div>
@@ -120,7 +114,6 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
 
-      {/* Header */}
       <div className="bg-white px-4 pt-12 pb-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/')}
@@ -132,12 +125,9 @@ export default function AdminPage() {
           </button>
           <h1 className="text-lg font-bold text-gray-900">Panel Admin</h1>
         </div>
-        <span className="text-xs bg-blue-50 text-blue-600 font-semibold px-3 py-1 rounded-full">
-          Admin
-        </span>
+        <span className="text-xs bg-blue-50 text-blue-600 font-semibold px-3 py-1 rounded-full">Admin</span>
       </div>
 
-      {/* Mensaje de feedback */}
       {message && (
         <div className="max-w-lg mx-auto px-4 pt-3">
           <div className="bg-green-50 border border-green-100 text-green-700 text-sm font-medium rounded-2xl py-3 px-4 text-center">
@@ -146,28 +136,22 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Tabs */}
       <div className="max-w-lg mx-auto px-4 pt-4">
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setTab('topics')}
             className={`flex-1 py-2.5 rounded-2xl text-sm font-semibold transition-all
-              ${tab === 'topics'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-500 border border-gray-200'}`}>
+              ${tab === 'topics' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}>
             📝 Temas ({topics.length})
           </button>
           <button
             onClick={() => setTab('users')}
             className={`flex-1 py-2.5 rounded-2xl text-sm font-semibold transition-all
-              ${tab === 'users'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-500 border border-gray-200'}`}>
+              ${tab === 'users' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}>
             🚫 Bloqueados ({blockedUsers.length})
           </button>
         </div>
 
-        {/* Tab Temas */}
         {tab === 'topics' && (
           <div className="flex flex-col gap-3">
             {topics.length === 0 ? (
@@ -175,11 +159,10 @@ export default function AdminPage() {
             ) : (
               topics.map(topic => (
                 <div key={topic.id} className="card p-4">
-                  {/* Info del topic */}
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div>
                       <p className="font-semibold text-sm text-gray-900">{topic.title}</p>
-                      <p className="text-xs text-gray-400">por {topic.author}</p>
+                      <p className="text-xs text-gray-400">por {topic.author?.name ?? 'Anónimo'}</p>
                     </div>
                     <button
                       onClick={() => handleDeleteTopic(topic.id)}
@@ -190,7 +173,6 @@ export default function AdminPage() {
 
                   <p className="text-xs text-gray-500 line-clamp-2 mb-3">{topic.content}</p>
 
-                  {/* Comentarios del topic */}
                   {topic.comments?.length > 0 && (
                     <div className="border-t border-gray-100 pt-3">
                       <p className="text-xs font-semibold text-gray-500 mb-2">
@@ -201,7 +183,7 @@ export default function AdminPage() {
                           <div key={comment.id}
                             className="flex items-center justify-between gap-2 bg-gray-50 rounded-xl px-3 py-2">
                             <div>
-                              <p className="text-xs font-semibold text-gray-700">{comment.author}</p>
+                              <p className="text-xs font-semibold text-gray-700">{comment.author?.name ?? 'Anónimo'}</p>
                               <p className="text-xs text-gray-500 line-clamp-1">{comment.content}</p>
                             </div>
                             <button
@@ -220,11 +202,8 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Tab Usuarios bloqueados */}
         {tab === 'users' && (
           <div className="flex flex-col gap-3">
-
-            {/* Bloquear nuevo usuario */}
             <div className="card p-4">
               <p className="text-sm font-semibold text-gray-700 mb-3">Bloquear usuario</p>
               <div className="flex gap-2">
@@ -243,11 +222,8 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Lista de bloqueados */}
             {blockedUsers.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">
-                No hay usuarios bloqueados
-              </p>
+              <p className="text-gray-400 text-sm text-center py-8">No hay usuarios bloqueados</p>
             ) : (
               blockedUsers.map(user => (
                 <div key={user.id} className="card p-4 flex items-center justify-between">

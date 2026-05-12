@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createTopic } from '../services/api'
+import { createTopic } from '../../services/api'
 
 export default function NewTopic() {
   const navigate = useNavigate()
@@ -39,7 +39,6 @@ export default function NewTopic() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
 
-      {/* Header */}
       <div className="bg-white px-4 pt-12 pb-4 flex items-center gap-3 shadow-sm">
         <button onClick={() => navigate('/')}
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
@@ -53,11 +52,8 @@ export default function NewTopic() {
 
       <div className="max-w-lg mx-auto px-4 pt-6 flex flex-col gap-4">
 
-        {/* Autor */}
         <div className="card p-4">
-          <label className="text-sm font-semibold text-gray-700 block mb-2">
-            Tu nombre
-          </label>
+          <label className="text-sm font-semibold text-gray-700 block mb-2">Tu nombre</label>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
               {author ? author[0].toUpperCase() : '?'}
@@ -71,11 +67,8 @@ export default function NewTopic() {
           </div>
         </div>
 
-        {/* Título */}
         <div className="card p-4">
-          <label className="text-sm font-semibold text-gray-700 block mb-2">
-            Título del tema
-          </label>
+          <label className="text-sm font-semibold text-gray-700 block mb-2">Título del tema</label>
           <input
             placeholder="Ej: ¿Qué bares recomiendan en Medellín?"
             value={title}
@@ -84,11 +77,8 @@ export default function NewTopic() {
           />
         </div>
 
-        {/* Contenido */}
         <div className="card p-4">
-          <label className="text-sm font-semibold text-gray-700 block mb-2">
-            ¿Qué quieres compartir?
-          </label>
+          <label className="text-sm font-semibold text-gray-700 block mb-2">¿Qué quieres compartir?</label>
           <textarea
             placeholder="Cuéntale a la comunidad..."
             value={content}
@@ -98,16 +88,11 @@ export default function NewTopic() {
           />
         </div>
 
-        {/* Imagen */}
         <div className="card p-4">
-          <label className="text-sm font-semibold text-gray-700 block mb-3">
-            📷 Añadir imagen (opcional)
-          </label>
-
+          <label className="text-sm font-semibold text-gray-700 block mb-3">📷 Añadir imagen (opcional)</label>
           {preview ? (
             <div className="relative">
-              <img src={preview} alt="preview"
-                className="w-full rounded-2xl object-cover max-h-48" />
+              <img src={preview} alt="preview" className="w-full rounded-2xl object-cover max-h-48" />
               <button
                 onClick={() => { setImage(null); setPreview(null) }}
                 className="absolute top-2 right-2 w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-sm hover:bg-opacity-70">
@@ -118,12 +103,7 @@ export default function NewTopic() {
             <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl py-6 cursor-pointer hover:border-blue-400 transition-all">
               <span className="text-2xl mb-1">🖼️</span>
               <span className="text-sm text-gray-400">Toca para seleccionar una imagen</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImage}
-                className="hidden"
-              />
+              <input type="file" accept="image/*" onChange={handleImage} className="hidden" />
             </label>
           )}
         </div>
@@ -134,11 +114,8 @@ export default function NewTopic() {
           </p>
         )}
 
-        {/* Botones */}
         <div className="flex gap-3">
-          <button onClick={() => navigate('/')} className="btn-secondary">
-            Cancelar
-          </button>
+          <button onClick={() => navigate('/')} className="btn-secondary">Cancelar</button>
           <button onClick={handleSubmit} disabled={sending} className="btn-primary">
             {sending ? 'Publicando...' : 'Publicar'}
           </button>

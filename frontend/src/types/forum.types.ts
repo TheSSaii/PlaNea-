@@ -1,21 +1,35 @@
+export interface Author {
+  id: string;
+  name: string | null;
+}
+
 export interface Comment {
-  id: number;
+  id: string;
   content: string;
-  author: string;
-  topicId: number;
+  author: Author;
+  topicId: string;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface ForumLike {
+  id: string;
+  topicId: string;
+  username: string;
+  createdAt: string;
+}
+
 export interface Topic {
-  id: number;
+  id: string;
   title: string;
   content: string;
-  author: string;
+  author: Author;
   imageUrl?: string;
+  status: 'ACTIVE' | 'BLOCKED';
   createdAt: string;
   updatedAt: string;
   comments: Comment[];
+  likes: ForumLike[];
 }
 
 export interface CreateTopicDto {
@@ -30,7 +44,7 @@ export interface CreateCommentDto {
 }
 
 export interface BlockedUser {
-  id: number;
+  id: string;
   username: string;
   blockedAt: string;
 }

@@ -191,3 +191,37 @@ docker compose exec backend npx prisma generate
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3000
 - Postgres: localhost:`DB_PORT` (defaults to `5432` in `.env.example`)
+
+## Forum Module (by HannaGarcia11)
+
+### Frontend Dependencies
+Run inside `/frontend`:
+```bash
+npm install
+npm install axios react-router-dom
+npm install tailwindcss@3 autoprefixer postcss
+```
+
+### Backend Dependencies
+Run inside `/backend`:
+```bash
+npm install
+npm install @nestjs/platform-express multer
+npm install -D @types/multer concurrently
+npx prisma migrate dev
+```
+
+### Environment Variables
+Copy `.env.example` and fill in:
+```env
+DATABASE_URL=""postgresql://postgres:123456@localhost:5432/foro_db""
+```
+
+### Run
+```bash
+# Backend
+npm run start:dev
+
+# Frontend
+npm run dev
+```

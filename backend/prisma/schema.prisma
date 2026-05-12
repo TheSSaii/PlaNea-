@@ -483,12 +483,14 @@ model ForumTopic {
   id        String           @id @default(uuid()) @db.Uuid
   title     String           @db.VarChar(160)
   content   String
+  imageUrl  String?   
   status    ForumTopicStatus @default(ACTIVE)
 
   authorId  String           @db.Uuid
   author    User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   comments  ForumComment[]
+  likes     ForumLike[]  
 
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
@@ -516,6 +518,25 @@ model ForumComment {
   @@index([topicId])
   @@index([authorId])
   @@index([parentId])
+}
+
+model ForumLike {
+  id        String     @id @default(uuid()) @db.Uuid
+  topicId   String     @db.Uuid
+  username  String
+
+  topic     ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime   @default(now())
+
+  @@unique([topicId, username])
+  @@index([topicId])
+}
+
+model ForumBlockedUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  username  String   @unique
+  blockedAt DateTime @default(now())
 }
 
 model Notification {

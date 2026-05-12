@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Topic } from '../types/forum.types'
-import { getAllTopics } from '../services/api'
+import type { Topic } from '../../types/forum.types'
+import { getAllTopics } from '../../services/api'
 
 export default function ForumPage() {
   const [topics, setTopics] = useState<Topic[]>([])

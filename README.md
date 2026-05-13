@@ -192,36 +192,58 @@ docker compose exec backend npx prisma generate
 - Backend: http://localhost:3000
 - Postgres: localhost:`DB_PORT` (defaults to `5432` in `.env.example`)
 
-## Forum Module (by HannaGarcia11)
+## Módulo Foro-Comunidad
 
-### Frontend Dependencies
-Run inside `/frontend`:
+### Descripción
+Módulo de foro comunitario con publicaciones, comentarios, likes y panel de administración.
+
+### Rutas frontend
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Lista de publicaciones |
+| `/topic/:id` | Detalle de una publicación |
+| `/new` | Crear nueva publicación |
+| `/admin` | Panel de administración (contraseña: admin123) |
+
+### Rutas backend (prefijo `/forum`)
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/forum/topics` | Obtener todos los temas |
+| POST | `/forum/topics` | Crear tema (soporta imagen) |
+| GET | `/forum/topics/:id` | Obtener tema por ID |
+| DELETE | `/forum/topics/:id` | Eliminar tema (admin) |
+| PATCH | `/forum/topics/:id` | Editar tema |
+| POST | `/forum/topics/:id/comments` | Agregar comentario |
+| DELETE | `/forum/topics/:topicId/comments/:commentId` | Eliminar comentario (admin) |
+| POST | `/forum/topics/:id/like` | Dar o quitar like |
+| GET | `/forum/topics/:id/likes` | Obtener likes |
+| POST | `/forum/users/block` | Bloquear usuario (admin) |
+| DELETE | `/forum/users/block/:username` | Desbloquear usuario (admin) |
+| GET | `/forum/users/blocked` | Lista de usuarios bloqueados |
+
+### Modelos en base de datos
+- `ForumTopic` — temas del foro (incluye `imageUrl`)
+- `ForumComment` — comentarios con soporte de hilos
+- `ForumLike` — likes por usuario y tema
+- `ForumBlockedUser` — usuarios bloqueados por el admin
+
+### Dependencias del módulo
+El módulo usa las siguientes dependencias que deben estar en `backend/package.json`:
+- `@nestjs/platform-express` — para subida de imágenes
+- `multer` — manejo de archivos
+- `@types/multer` — tipos de TypeScript para multer
+
+### Después de hacer pull
 ```bash
-npm install
-npm install axios react-router-dom
-npm install tailwindcss@3 autoprefixer postcss
+docker-compose exec backend npx prisma migrate dev
+docker-compose exec backend npx prisma generate
+docker-compose up -d
 ```
 
-### Backend Dependencies
-Run inside `/backend`:
-```bash
-npm install
-npm install @nestjs/platform-express multer
-npm install -D @types/multer concurrently
-npx prisma migrate dev
-```
-
-### Environment Variables
-Copy `.env.example` and fill in:
+### Variables de entorno necesarias
+En el archivo `.env` de la raíz del proyecto deben existir:
 ```env
-DATABASE_URL=""postgresql://postgres:123456@localhost:5432/foro_db""
-```
-
-### Run
-```bash
-# Backend
-npm run start:dev
-
-# Frontend
-npm run dev
+DATABASE_URL=postgresql://postgres:changeme@postgres:5432/myapp_db
+JWT_SECRET=super_secret_key_change_in_production
+VITE_API_URL=http://localhost:3000
 ```

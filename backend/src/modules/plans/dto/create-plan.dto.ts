@@ -1,33 +1,29 @@
 import {
-  IsString, IsInt, IsNumber,
-  IsEnum, IsDateString, Min
+  IsString, IsInt, IsOptional,
+  IsDateString, Min, IsUUID
 } from 'class-validator';
-
-export enum TransportMode {
-  WALK = 'WALK',
-  BIKE = 'BIKE',
-  CAR = 'CAR',
-  MOTORCYCLE = 'MOTORCYCLE',
-  PUBLIC_TRANSPORT = 'PUBLIC_TRANSPORT',
-  TAXI = 'TAXI',
-  RIDE_SHARE = 'RIDE_SHARE'
-}
 
 export class CreatePlanDto {
   @IsString()
-  name!: string;        // ← el ! resuelve el error
+  title!: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   @IsInt()
   @Min(1)
-  numberOfPeople!: number;   // ← el !
+  peopleCount!: number;
 
-  @IsNumber()
+  @IsInt()
+  @IsOptional()
   @Min(0)
-  budget!: number;           // ← el !
-
-  @IsEnum(TransportMode)
-  transport!: TransportMode; // ← el !
+  budgetCents?: number;
 
   @IsDateString()
-  scheduledAt!: string;      // ← el !
+  @IsOptional()
+  eventAt?: string;
+
+  @IsUUID()
+  createdById!: string; // Obligatorio para vincularlo al User
 }

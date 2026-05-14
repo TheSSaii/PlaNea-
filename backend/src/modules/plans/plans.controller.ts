@@ -2,13 +2,13 @@ import {
   Controller, Get, Post, Patch, Delete,
   Param, Body, Query
 } from '@nestjs/common';
+import { PlanStatus } from '@prisma/client';
 import { PlansService } from './plans.service';
 import { SubplansService } from './subplans.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
 import { CreateSubplanDto } from './dto/create-subplan.dto';
 
-/*
 @Controller('plans')
 export class PlansController {
   constructor(
@@ -22,7 +22,7 @@ export class PlansController {
   }
 
   @Get()
-  findAll(@Query('status') status?: string) {
+  findAll(@Query('status') status?: PlanStatus) {
     return this.plansService.findAll(status);
   }
 
@@ -61,13 +61,4 @@ export class PlansController {
   ) {
     return this.subplansService.remove(planId, subplanId);
   }
-}*/
-
-//Esto se puede eliminar apenas se organice el modulo 
-@Controller('plans')
-export class PlansController {
-  constructor(
-    private readonly plansService: PlansService,
-    private readonly subplansService: SubplansService,
-  ) {}
 }

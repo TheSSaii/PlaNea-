@@ -247,3 +247,39 @@ DATABASE_URL=postgresql://postgres:changeme@postgres:5432/myapp_db
 JWT_SECRET=super_secret_key_change_in_production
 VITE_API_URL=http://localhost:3000
 ```
+
+### Cómo probar el módulo
+
+1. Asegúrate de tener Docker Desktop corriendo
+
+2. Desde la raíz del proyecto (`QuePlan/`) ejecuta:
+```bash
+docker-compose up -d
+```
+
+3. Abre el navegador en:
+   - **Foro:** http://localhost:5173/
+   - **Nueva publicación:** http://localhost:5173/new
+   - **Panel admin:** http://localhost:5173/admin
+     - Contraseña: `admin123`
+
+4. Para ver los logs del backend:
+```bash
+docker-compose logs backend --tail=50
+```
+
+5. Para ver los logs del frontend:
+```bash
+docker-compose logs frontend --tail=50
+```
+
+6. Para detener todo:
+```bash
+docker-compose down
+```
+
+### Dependencia faltante — importante
+Si el backend falla con errores de tipos en multer, instala:
+```bash
+docker-compose exec backend npm install --save-dev @types/multer
+```

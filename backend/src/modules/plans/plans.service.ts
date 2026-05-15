@@ -18,9 +18,7 @@ export class PlansService {
         description: dto.description,
         peopleCount: dto.peopleCount,
         budgetCents: dto.budgetCents,
-        // Convertimos el string a Date si viene en el payload
-        eventAt: dto.eventAt ? new Date(dto.eventAt) : undefined, 
-        // Relación con el usuario:
+        eventAt: dto.eventAt ? new Date(dto.eventAt) : undefined,
         createdBy: {
           connect: { id: dto.createdById }
         }
@@ -29,9 +27,7 @@ export class PlansService {
   }
 
   async findAll(status?: string) {
-    // Construimos el filtro dinámicamente. Si mandan status, lo filtramos, si no, trae todo.
     const whereClause = status ? { status: status as any } : {};
-
     return this.prisma.plan.findMany({
       where: whereClause,
       orderBy: { eventAt: 'desc' },
@@ -43,21 +39,17 @@ export class PlansService {
       where: { id },
       include: { subplans: { orderBy: { order: 'asc' } } },
     });
-    
     if (!plan) throw new NotFoundException(`Plan ${id} no encontrado`);
     return plan;
   }
 
   async update(id: string, dto: UpdatePlanDto) {
-    // Verificamos que el plan exista antes de actualizar
     await this.findOne(id);
-    
     const data: any = { ...dto };
     if (dto.eventAt) {
       data.eventAt = new Date(dto.eventAt);
       data.status = this.calcStatus(data.eventAt);
     }
-    
     return this.prisma.plan.update({
       where: { id },
       data,
@@ -66,9 +58,7 @@ export class PlansService {
   }
 
   async remove(id: string) {
-    // Verificamos que el plan exista antes de eliminar
     await this.findOne(id);
-    
     await this.prisma.plan.delete({ where: { id } });
   }
 }

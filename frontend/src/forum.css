@@ -3,20 +3,12 @@
 @tailwind utilities;
 
 @layer base {
-  body {
+  .forum-root body,
+  .forum-root {
     font-family: 'Plus Jakarta Sans', sans-serif;
     background-color: #f8fafc;
     color: #0f172a;
     margin: 0;
-  }
-
-  #root {
-    width: 100%;
-    max-width: 100%;
-    min-height: 100svh;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
   }
 }
 

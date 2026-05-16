@@ -1,285 +1,358 @@
-# QuePlan (Monorepo)
+# QuePlan
 
-This repository contains:
-- `backend/`: NestJS + Prisma API
-- `frontend/`: React + Vite web app
-- `docker-compose.yml`: local dev stack (PostgreSQL + backend + frontend)
+QuePlan es una aplicacion web para organizar planes y actividades con otras personas. El proyecto esta armado como monorepo y actualmente incluye una API en NestJS, una app web en React/Vite y una base de datos PostgreSQL.
 
-## Tech Stack
+El flujo local esta pensado para desarrollo con Docker Compose: despues de clonar el repositorio, Docker construye las imagenes, instala dependencias, levanta PostgreSQL, aplica migraciones Prisma y arranca backend y frontend con recarga en caliente.
 
-**Infrastructure / Containers**
-- Docker Compose stack: PostgreSQL, backend, frontend (`docker-compose.yml`)
-- PostgreSQL: `postgres:16-alpine` (`docker-compose.yml`)
-- Backend container base image: `node:20-alpine` (`backend/Dockerfile`)
-- Frontend container base image: `node:20-alpine` (`frontend/Dockerfile`)
-- Frontend production image: `nginx:alpine` (`frontend/Dockerfile`)
+## Aplicacion
 
-**Backend (`backend/package.json`)**
-- Node.js (container): 20.x (`backend/Dockerfile`)
-- NestJS: `@nestjs/common` `^11.0.1`, `@nestjs/core` `^11.0.1`, `@nestjs/platform-express` `^11.0.1`
-- Config: `@nestjs/config` `^4.0.4`
-- Prisma: `prisma` `^6.7.0`, `@prisma/client` `^6.7.0`
-- Validation: `joi` `^18.2.1`, `class-validator` `^0.15.1`, `class-transformer` `^0.5.1`
-- Runtime libs: `rxjs` `^7.8.1`, `reflect-metadata` `^0.2.2`
-- Testing: `jest` `^30.0.0`, `ts-jest` `^29.2.5`, `supertest` `^7.0.0`
-- Lint/format: `eslint` `^9.18.0`, `prettier` `^3.4.2`, `eslint-plugin-prettier` `^5.2.2`, `eslint-config-prettier` `^10.0.1`, `typescript-eslint` `^8.20.0`
-- TypeScript: `typescript` `^5.7.3`
+La app esta compuesta por estos dominios principales:
 
-**Frontend (`frontend/package.json`)**
-- React: `react` `^19.2.5`, `react-dom` `^19.2.5`
-- Routing: `react-router-dom` `^7.14.2`
-- HTTP client: `axios` `^1.16.0`
-- Build/dev server: `vite` `^8.0.10`, `@vitejs/plugin-react` `^6.0.1`
-- TypeScript: `typescript` `~6.0.2`
-- Lint: `eslint` `^10.2.1`, `typescript-eslint` `^8.58.2`, `eslint-plugin-react-hooks` `^7.1.1`, `eslint-plugin-react-refresh` `^0.5.2`
+- Autenticacion y usuarios: registro, login, perfiles y emision de JWT.
+- Planes: creacion, consulta, actualizacion, eliminacion y subplanes ordenables.
+- Administracion: consulta y gestion administrativa de planes.
+- Foro/comunidad: publicaciones, detalle de tema, comentarios, likes, bloqueo de usuarios y carga de imagenes.
 
-## Prerequisites
+La interfaz web actual expone el modulo de foro:
 
-The repo does not pin exact Docker/Docker Compose versions, but it requires a Docker installation that supports the modern `docker compose` (Compose v2) command.
+- `/`: listado de publicaciones.
+- `/topic/:id`: detalle de una publicacion.
+- `/new`: crear publicacion.
+- `/admin`: panel de administracion del foro.
 
-- Docker Engine: must support `docker compose`
-  - Verify: `docker --version`
-- Docker Compose (v2): must be available as a Docker subcommand
-  - Verify: `docker compose version`
+## Tecnologias
 
-Node.js/npm are used inside containers via `node:20-alpine`. If you want to run the apps outside Docker, match the container runtime:
-- Node.js: 20.x
-  - Verify: `node -v`
-- npm: the version bundled with your Node 20 install
-  - Verify: `npm -v`
+**Infraestructura**
 
-## Environment Setup
-
-This repo includes a root `.env.example` used by `docker-compose.yml` variable interpolation.
-
-1) Create your env file:
-```bash
-cp .env.example .env
-```
-
-2) Configure variables (from `.env.example`):
-
-**Database (used by the `postgres` service and to compose `DATABASE_URL` for the backend container)**
-- `DB_USER` (required): PostgreSQL user
-- `DB_PASSWORD` (required): PostgreSQL password
-- `DB_NAME` (required): PostgreSQL database name
-- `DB_PORT` (required): host port to expose Postgres on (container is always `5432`)
+- Docker Compose v2.
+- PostgreSQL `16-alpine`.
+- Node.js `20-alpine` para backend y frontend en desarrollo.
+- Nginx `alpine` como imagen de produccion del frontend.
 
 **Backend**
-- `JWT_SECRET` (required): secret used by the backend for JWT signing/verification (`docker-compose.yml`)
-- `NODE_ENV` (optional): present in `.env.example`, but `docker-compose.yml` sets `NODE_ENV=development` for the backend container
-- `PORT` (optional): present in `.env.example`, but `docker-compose.yml` sets `PORT=3000` for the backend container
-- `DATABASE_URL` (optional for Compose): present in `.env.example`; the backend container receives its own `DATABASE_URL` composed from `DB_*` in `docker-compose.yml`
+
+- NestJS 11.
+- Prisma 6.19 con Prisma Client.
+- PostgreSQL como base de datos.
+- JWT con `@nestjs/jwt` y `passport-jwt`.
+- `bcrypt` para hash de contrasenas.
+- `class-validator`, `class-transformer` y `joi` para validacion.
+- Jest, Supertest, ESLint, Prettier y TypeScript.
 
 **Frontend**
-- `VITE_API_URL` (optional for Compose): present in `.env.example`, but `docker-compose.yml` sets `VITE_API_URL=http://localhost:3000` for the frontend container
 
-## Getting Started
+- React 19.
+- Vite 8.
+- TypeScript 6.
+- React Router 7.
+- Axios.
+- Tailwind CSS 3, PostCSS y Autoprefixer.
+- ESLint con reglas para React Hooks y React Refresh.
 
-1) Clone the repo:
-```bash
-git clone <REPO_URL>
-cd <REPO_FOLDER>
+## Arquitectura Del Proyecto
+
+```text
+.
+├─ backend/
+│  ├─ prisma/                 # Schema Prisma y migraciones
+│  ├─ src/                    # API NestJS
+│  ├─ Dockerfile              # Imagen multi-stage: base, development, builder, production
+│  └─ entrypoint.sh           # Aplica migraciones y arranca Nest
+├─ frontend/
+│  ├─ public/                 # Assets publicos
+│  ├─ src/                    # App React
+│  ├─ Dockerfile              # Imagen multi-stage: base, development, builder, production
+│  ├─ entrypoint.sh           # Verifica dependencias y arranca Vite
+│  └─ .dockerignore           # Excluye node_modules, builds, logs y envs del contexto Docker
+├─ docker-compose.yml         # Stack local: PostgreSQL, backend y frontend
+├─ .env.example               # Ejemplo de variables locales
+└─ README.md
 ```
 
-2) Create `.env`:
+## Servicios Docker
+
+**postgres**
+
+- Usa la imagen `postgres:16-alpine`.
+- Expone el puerto `${DB_PORT:-5432}` del host hacia `5432` del contenedor.
+- Guarda datos en el volumen Docker `postgres_data`.
+- Tiene healthcheck con `pg_isready`.
+- Usa defaults de desarrollo si no existe `.env`:
+  - `DB_USER=postgres`
+  - `DB_PASSWORD=changeme`
+  - `DB_NAME=myapp_db`
+
+**backend**
+
+- Construye `backend/Dockerfile` con target `development`.
+- Instala dependencias con `npm ci`.
+- Genera Prisma Client durante la build con `npx prisma generate`.
+- Espera a que PostgreSQL este healthy.
+- Al iniciar ejecuta `backend/entrypoint.sh`, que corre:
+  - `npx prisma migrate deploy`
+  - `npm run start:dev`
+- Expone:
+  - API: `http://localhost:3000`
+  - Debug Node: `localhost:9229`
+- Monta `./backend/src` y `./backend/prisma` para desarrollo con hot reload y migraciones locales.
+
+**frontend**
+
+- Construye `frontend/Dockerfile` con target `development`.
+- Instala dependencias con `npm ci`.
+- Al iniciar ejecuta `frontend/entrypoint.sh`, que verifica que existan dependencias y arranca Vite.
+- Expone la app en `http://localhost:5173`.
+- Usa `VITE_API_URL=${VITE_API_URL:-http://localhost:3000}`.
+- Monta `./frontend/src` y `./frontend/public` para HMR.
+
+## Levantar El Proyecto En Local
+
+Requisitos:
+
+- Docker Engine funcionando.
+- Docker Compose v2 disponible con el comando `docker compose`.
+
+Verificacion rapida:
+
+```bash
+docker --version
+docker compose version
+docker ps
+```
+
+Flujo recomendado despues de clonar:
+
+```bash
+git clone <REPO_URL>
+cd QuePlan
+docker compose up -d --build
+```
+
+Con la configuracion actual, no es obligatorio crear `.env` para desarrollo local basico. `docker-compose.yml` incluye defaults de desarrollo para arrancar en local.
+
+Si quieres personalizar variables, crea tu `.env`:
+
 ```bash
 cp .env.example .env
 ```
 
-3) Start everything (fresh machine):
+Variables soportadas:
+
+```env
+DB_USER=postgres
+DB_PASSWORD=changeme
+DB_NAME=myapp_db
+DB_PORT=5432
+DATABASE_URL=postgresql://postgres:changeme@postgres:5432/myapp_db
+NODE_ENV=development
+PORT=3000
+JWT_SECRET=super_secret_key_change_in_production
+VITE_API_URL=http://localhost:3000
+```
+
+Nota: los defaults del `docker-compose.yml` son solo para desarrollo. Para ambientes compartidos, staging o produccion, define variables reales y cambia `JWT_SECRET`.
+
+## URLs Locales
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:3000
+- PostgreSQL: `localhost:${DB_PORT:-5432}`
+
+## Comandos Comunes
+
+Levantar todo reconstruyendo imagenes:
+
 ```bash
 docker compose up -d --build
 ```
 
-What happens on first boot:
-- Postgres starts and is health-checked (`pg_isready`).
-- Backend starts after Postgres is healthy and runs `npx prisma migrate deploy` via `backend/entrypoint.sh`.
-- Frontend starts after the backend container is up.
+Levantar sin reconstruir:
 
-## Common Commands
-
-**Docker Compose lifecycle**
 ```bash
-docker compose up -d --build
-docker compose down
-docker compose down -v
+docker compose up -d
+```
+
+Ver estado de servicios:
+
+```bash
 docker compose ps
-docker compose restart backend
 ```
 
-**Logs**
+Ver logs:
+
 ```bash
 docker compose logs -f
-docker compose logs -f postgres
 docker compose logs -f backend
 docker compose logs -f frontend
+docker compose logs -f postgres
 ```
 
-**Exec into containers**
+Entrar a un contenedor:
+
 ```bash
 docker compose exec backend sh
 docker compose exec frontend sh
 ```
 
-**Prisma (run from inside the backend container)**
+Detener servicios sin borrar datos:
+
 ```bash
-# Generate client
-docker compose exec backend npx prisma generate
+docker compose down
+```
 
-# First migration (already exists in backend/prisma/migrations)
-docker compose exec backend npx prisma migrate dev --name init
+Detener servicios y borrar la base local:
 
-# Subsequent migrations after changing schema.prisma
-docker compose exec backend npx prisma migrate dev --name <migration_name>
+```bash
+docker compose down -v
+```
 
-# Apply migrations without prompting (used by entrypoint)
-docker compose exec backend npx prisma migrate deploy
+Usa `docker compose down -v` solo si quieres eliminar el volumen `postgres_data` y perder los datos locales.
 
-# Migration status
+## Migraciones Prisma
+
+En el arranque normal no tienes que ejecutar migraciones manualmente. El backend aplica migraciones existentes con:
+
+```bash
+npx prisma migrate deploy
+```
+
+Ese comando se ejecuta dentro de `backend/entrypoint.sh` cada vez que inicia el contenedor.
+
+Cuando cambies `backend/prisma/schema.prisma` durante desarrollo, crea una nueva migracion desde el contenedor:
+
+```bash
+docker compose exec backend npx prisma migrate dev --name <nombre_de_migracion>
+```
+
+Consultar estado de migraciones:
+
+```bash
 docker compose exec backend npx prisma migrate status
-
-# Prisma Studio
-docker compose exec backend npx prisma studio --host 0.0.0.0 --port 5555
-```
-If you run Prisma Studio, expose the port by adding a port mapping for `backend` in `docker-compose.yml` (not currently configured).
-
-## Project Structure
-
-Top-level layout:
-```text
-.
-├─ backend/
-│  ├─ prisma/                 # Prisma schema + migrations
-│  ├─ src/                    # NestJS application source
-│  ├─ test/                   # Jest tests (including e2e config)
-│  ├─ Dockerfile              # Node 20 multi-stage image (dev/builder/prod)
-│  ├─ entrypoint.sh           # Runs migrations, then starts Nest
-│  ├─ nest-cli.json           # Nest CLI config
-│  ├─ tsconfig*.json          # TS config (build + base)
-│  └─ eslint.config.mjs       # ESLint flat config (type-aware)
-├─ frontend/
-│  ├─ public/                 # Static assets served by Vite
-│  ├─ src/                    # React app source
-│  ├─ Dockerfile              # Node 20 dev + Nginx prod stages
-│  ├─ vite.config.ts          # Vite config (React plugin)
-│  ├─ tsconfig*.json          # TS project references
-│  └─ eslint.config.js        # ESLint flat config for TS/React
-├─ docker-compose.yml         # Postgres + backend + frontend dev stack
-├─ .env.example               # Compose env template
-└─ .env                       # Local env (should not be committed)
 ```
 
-## Development Workflow
+Regenerar Prisma Client manualmente si hace falta:
 
-**Hot reload**
-- Backend: `docker-compose.yml` mounts `./backend/src:/app/src` and starts `npm run start:dev` (Nest `--watch`).
-- Frontend: `docker-compose.yml` mounts `./frontend/src:/app/src` and runs Vite with `--host 0.0.0.0` (HMR).
-
-**Add a new Prisma model**
-1) Edit `backend/prisma/schema.prisma`
-2) Create and apply a migration:
-```bash
-docker compose exec backend npx prisma migrate dev --name <change_name>
-```
-3) Regenerate Prisma client (usually handled automatically by `migrate dev`, but can be run manually):
 ```bash
 docker compose exec backend npx prisma generate
 ```
 
-**Service URLs / ports (local machine)**
-- Frontend: http://localhost:5173
-- Backend: http://localhost:3000
-- Postgres: localhost:`DB_PORT` (defaults to `5432` in `.env.example`)
+## Dependencias
 
-## Módulo Foro-Comunidad
+No es necesario ejecutar `npm install` en el host para levantar el proyecto con Docker. Cada imagen instala sus dependencias con `npm ci` usando su respectivo `package-lock.json`.
 
-### Descripción
-Módulo de foro comunitario con publicaciones, comentarios, likes y panel de administración.
+Si agregas dependencias, actualiza siempre `package.json` y `package-lock.json` juntos:
 
-### Rutas frontend
-| Ruta | Descripción |
-|------|-------------|
-| `/` | Lista de publicaciones |
-| `/topic/:id` | Detalle de una publicación |
-| `/new` | Crear nueva publicación |
-| `/admin` | Panel de administración (contraseña: admin123) |
-
-### Rutas backend (prefijo `/forum`)
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/forum/topics` | Obtener todos los temas |
-| POST | `/forum/topics` | Crear tema (soporta imagen) |
-| GET | `/forum/topics/:id` | Obtener tema por ID |
-| DELETE | `/forum/topics/:id` | Eliminar tema (admin) |
-| PATCH | `/forum/topics/:id` | Editar tema |
-| POST | `/forum/topics/:id/comments` | Agregar comentario |
-| DELETE | `/forum/topics/:topicId/comments/:commentId` | Eliminar comentario (admin) |
-| POST | `/forum/topics/:id/like` | Dar o quitar like |
-| GET | `/forum/topics/:id/likes` | Obtener likes |
-| POST | `/forum/users/block` | Bloquear usuario (admin) |
-| DELETE | `/forum/users/block/:username` | Desbloquear usuario (admin) |
-| GET | `/forum/users/blocked` | Lista de usuarios bloqueados |
-
-### Modelos en base de datos
-- `ForumTopic` — temas del foro (incluye `imageUrl`)
-- `ForumComment` — comentarios con soporte de hilos
-- `ForumLike` — likes por usuario y tema
-- `ForumBlockedUser` — usuarios bloqueados por el admin
-
-### Dependencias del módulo
-El módulo usa las siguientes dependencias que deben estar en `backend/package.json`:
-- `@nestjs/platform-express` — para subida de imágenes
-- `multer` — manejo de archivos
-- `@types/multer` — tipos de TypeScript para multer
-
-### Después de hacer pull
 ```bash
-docker-compose exec backend npx prisma migrate dev
-docker-compose exec backend npx prisma generate
-docker-compose up -d
+cd backend
+npm install <paquete>
+cd ..
 ```
 
-### Variables de entorno necesarias
-En el archivo `.env` de la raíz del proyecto deben existir:
-```env
-DATABASE_URL=postgresql://postgres:changeme@postgres:5432/myapp_db
-JWT_SECRET=super_secret_key_change_in_production
-VITE_API_URL=http://localhost:3000
+Para dependencias de desarrollo:
+
+```bash
+cd backend
+npm install -D <paquete>
+cd ..
 ```
 
-### Cómo probar el módulo
+Aplica el mismo criterio en `frontend/`.
 
-1. Asegúrate de tener Docker Desktop corriendo
+Antes de commitear cambios de dependencias, puedes validar:
 
-2. Desde la raíz del proyecto (`QuePlan/`) ejecuta:
 ```bash
-docker-compose up -d
+cd backend
+npm ci --dry-run
+cd ../frontend
+npm ci --dry-run
+cd ..
 ```
 
-3. Abre el navegador en:
-   - **Foro:** http://localhost:5173/
-   - **Nueva publicación:** http://localhost:5173/new
-   - **Panel admin:** http://localhost:5173/admin
-     - Contraseña: `admin123`
+## Endpoints Principales
 
-4. Para ver los logs del backend:
+**Autenticacion**
+
+- `POST /auth/register`
+- `POST /auth/login`
+
+**Usuarios**
+
+- `GET /users/:id`
+- `PATCH /users/:id`
+
+**Planes**
+
+- `POST /plans`
+- `GET /plans`
+- `GET /plans/:id`
+- `PATCH /plans/:id`
+- `DELETE /plans/:id`
+- `POST /plans/:id/subplans`
+- `PATCH /plans/:id/subplans/reorder`
+- `DELETE /plans/:id/subplans/:subplanId`
+
+**Administracion de planes**
+
+- `GET /admin/plans/stats`
+- `GET /admin/plans`
+- `GET /admin/plans/:id`
+- `PATCH /admin/plans/:id`
+- `DELETE /admin/plans/:id`
+
+**Foro**
+
+- `GET /forum/topics`
+- `POST /forum/topics`
+- `GET /forum/topics/:id`
+- `PATCH /forum/topics/:id`
+- `DELETE /forum/topics/:id`
+- `POST /forum/topics/:id/comments`
+- `DELETE /forum/topics/:topicId/comments/:commentId`
+- `POST /forum/topics/:id/like`
+- `GET /forum/topics/:id/likes`
+- `POST /forum/users/block`
+- `DELETE /forum/users/block/:username`
+- `GET /forum/users/blocked`
+
+## Solucion De Problemas
+
+Si Docker no tiene permisos en Linux:
+
 ```bash
-docker-compose logs backend --tail=50
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+newgrp docker
+docker ps
 ```
 
-5. Para ver los logs del frontend:
+Si Docker esta apuntando a Docker Desktop pero no esta corriendo:
+
 ```bash
-docker-compose logs frontend --tail=50
+docker context ls
+docker context use default
+docker ps
 ```
 
-6. Para detener todo:
+Si cambiaste dependencias y la build falla en `npm ci`, sincroniza el lockfile:
+
 ```bash
-docker-compose down
+cd backend
+npm install --package-lock-only
+npm ci --dry-run
+cd ..
 ```
 
-### Dependencia faltante — importante
-Si el backend falla con errores de tipos en multer, instala:
+Para frontend:
+
 ```bash
-docker-compose exec backend npm install --save-dev @types/multer
+cd frontend
+npm install --package-lock-only
+npm ci --dry-run
+cd ..
+```
+
+Luego reconstruye:
+
+```bash
+docker compose up -d --build
 ```

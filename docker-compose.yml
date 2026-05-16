@@ -34,7 +34,7 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-myapp_db}
       NODE_ENV: development
       PORT: 3000
-      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me}
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me_for_local_only}
     ports:
       - "3000:3000"
       - "9229:9229"   # Debug port

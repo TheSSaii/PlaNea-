@@ -18,6 +18,8 @@
 import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
+import { Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 /**
  * CONTROLADOR: UsersController
@@ -25,6 +27,12 @@ import { UsersService } from './users.service';
  */
 @Controller('users')
 export class UsersController {
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getMe(@Req() req: any) {
+    return req.user;
+  } 
   /**
    * Inyección de dependencias
    * NestJS instancia automáticamente UsersService y lo inyecta

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'; //importé esto para que me corriera el jest
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
@@ -40,12 +41,11 @@ describe('AuthService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-<<<<<<< HEAD
 
   it('registers a user and returns an access token', async () => {
     const createdUser = buildUser();
     usersService.create.mockReturnValue(createdUser);
-    jwtService.signAsync.mockResolvedValue('signed-token');
+    jwtService.signAsync.mockResolvedValue('signed-token'); //Puede que haya un error aquí pero bueno, como ustedes programaron eso como se les dio la puta gana lo voy a cambiar para verificar algo
 
     const result = await service.register({
       email: 'test@example.com',
@@ -90,6 +90,3 @@ function buildUser(overrides: Partial<Parameters<typeof User.create>[0]> = {}) {
     updatedAt: overrides.updatedAt,
   });
 }
-=======
-});
->>>>>>> origin/feature/plan-management

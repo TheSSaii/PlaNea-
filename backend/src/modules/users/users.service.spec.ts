@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'; //implementé el jest para arreglar el problema
 import { Test, TestingModule } from '@nestjs/testing';
 import { User } from './user.entity';
 import { UsersService } from './users.service';
@@ -34,7 +35,7 @@ describe('UsersService', () => {
   it('creates a user through the repository', () => {
     const savedUser = buildUser();
     repository.findByEmail.mockReturnValue(null);
-    repository.save.mockImplementation((user) => user);
+    repository.save.mockImplementation((user) => Promise.resolve(user));
 
     const user = service.create({
       id: savedUser.id,

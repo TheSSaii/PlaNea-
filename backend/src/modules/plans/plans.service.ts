@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { PlanStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
@@ -7,34 +8,55 @@ import { UpdatePlanDto } from './dto/update-plan.dto';
 export class PlansService {
   constructor(private prisma: PrismaService) {}
 
-  private calcStatus(date: Date) {
-    return date > new Date() ? 'FUTURE' : 'PAST';
+  private calcStatus(date: Date): PlanStatus {
+    return date > new Date() ? PlanStatus.OPEN : PlanStatus.FINALIZED;
+  }
+
+  private async getCreatedById(createdById?: string) {
+    if (createdById) return createdById;
+
+    const user = await this.prisma.user.upsert({
+      where: { email: 'dev@queplan.local' },
+      update: {},
+      create: {
+        email: 'dev@queplan.local',
+        passwordHash: 'development-only-user',
+        name: 'Usuario Desarrollo',
+      },
+      select: { id: true },
+    });
+
+    return user.id;
   }
 
   async create(dto: CreatePlanDto) {
-    return await this.prisma.plan.create({
+    const createdById = await this.getCreatedById(dto.createdById);
+
+    return this.prisma.plan.create({
       data: {
         title: dto.title,
         description: dto.description,
         peopleCount: dto.peopleCount,
         budgetCents: dto.budgetCents,
-        // Convertimos el string a Date si viene en el payload
-        eventAt: dto.eventAt ? new Date(dto.eventAt) : undefined, 
-        // Relación con el usuario:
+        eventAt: dto.eventAt ? new Date(dto.eventAt) : undefined,
         createdBy: {
-          connect: { id: dto.createdById }
-        }
-      }
+          connect: { id: createdById },
+        },
+      },
+      include: { subplans: { orderBy: { order: 'asc' } } },
     });
   }
 
   async findAll(status?: string) {
-    // Construimos el filtro dinámicamente. Si mandan status, lo filtramos, si no, trae todo.
-    const whereClause = status ? { status: status as any } : {};
+    const whereClause =
+      status && Object.values(PlanStatus).includes(status as PlanStatus)
+        ? { status: status as PlanStatus }
+        : {};
 
     return this.prisma.plan.findMany({
       where: whereClause,
       orderBy: { eventAt: 'desc' },
+      include: { subplans: { orderBy: { order: 'asc' } } },
     });
   }
 
@@ -43,21 +65,42 @@ export class PlansService {
       where: { id },
       include: { subplans: { orderBy: { order: 'asc' } } },
     });
-    
+
     if (!plan) throw new NotFoundException(`Plan ${id} no encontrado`);
     return plan;
   }
 
   async update(id: string, dto: UpdatePlanDto) {
-    // Verificamos que el plan exista antes de actualizar
     await this.findOne(id);
-    
-    const data: any = { ...dto };
+
+    const data: {
+      title?: string;
+      description?: string;
+      peopleCount?: number;
+      budgetCents?: number;
+      eventAt?: Date;
+      status?: PlanStatus;
+      createdBy?: { connect: { id: string } };
+    } = {};
+
+    if (dto.title != null) data.title = dto.title;
+    if (dto.description != null) data.description = dto.description;
+    if (dto.peopleCount != null) data.peopleCount = Number(dto.peopleCount);
+    if (dto.budgetCents != null) data.budgetCents = Number(dto.budgetCents);
+    if (dto.createdById) {
+      data.createdBy = { connect: { id: await this.getCreatedById(dto.createdById) } };
+    }
+
+    const requestedStatus = (dto as UpdatePlanDto & { status?: PlanStatus }).status;
+    if (requestedStatus && Object.values(PlanStatus).includes(requestedStatus)) {
+      data.status = requestedStatus;
+    }
+
     if (dto.eventAt) {
       data.eventAt = new Date(dto.eventAt);
       data.status = this.calcStatus(data.eventAt);
     }
-    
+
     return this.prisma.plan.update({
       where: { id },
       data,
@@ -66,9 +109,7 @@ export class PlansService {
   }
 
   async remove(id: string) {
-    // Verificamos que el plan exista antes de eliminar
     await this.findOne(id);
-    
     await this.prisma.plan.delete({ where: { id } });
   }
 }

@@ -98,7 +98,7 @@ export default function AdminPage() {
               <p className="text-xs text-red-500 text-center">{passwordError}</p>
             )}
             <button onClick={handleLogin} className="btn-primary">Entrar</button>
-            <button onClick={() => navigate('/')} className="btn-secondary">Volver al foro</button>
+            <button onClick={() => navigate('/forum')} className="btn-secondary">Volver al foro</button>
           </div>
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function AdminPage() {
 
       <div className="bg-white px-4 pt-12 pb-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/')}
+          <button onClick={() => navigate('/forum')}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
               strokeWidth={2.5} viewBox="0 0 24 24">

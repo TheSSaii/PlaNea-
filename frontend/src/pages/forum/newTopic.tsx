@@ -28,7 +28,7 @@ export default function NewTopic() {
     setError('')
     try {
       await createTopic({ title, content, author }, image || undefined)
-      navigate('/')
+      navigate('/forum')
     } catch {
       setError('Error al crear el tema, intenta de nuevo')
     } finally {
@@ -40,7 +40,7 @@ export default function NewTopic() {
     <div className="min-h-screen bg-gray-50 pb-24">
 
       <div className="bg-white px-4 pt-12 pb-4 flex items-center gap-3 shadow-sm">
-        <button onClick={() => navigate('/')}
+        <button onClick={() => navigate('/forum')}
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
             strokeWidth={2.5} viewBox="0 0 24 24">
@@ -115,7 +115,7 @@ export default function NewTopic() {
         )}
 
         <div className="flex gap-3">
-          <button onClick={() => navigate('/')} className="btn-secondary">Cancelar</button>
+          <button onClick={() => navigate('/forum')} className="btn-secondary">Cancelar</button>
           <button onClick={handleSubmit} disabled={sending} className="btn-primary">
             {sending ? 'Publicando...' : 'Publicar'}
           </button>

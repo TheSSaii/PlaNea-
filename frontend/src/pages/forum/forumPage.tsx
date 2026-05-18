@@ -27,7 +27,7 @@ export default function ForumPage() {
       <div className="bg-white px-4 pt-12 pb-4 flex items-center justify-between shadow-sm">
         <h1 className="text-lg font-bold text-gray-900">Comunidad</h1>
         <button
-          onClick={() => navigate('/new')}
+          onClick={() => navigate('/forum/new')}
           className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-2xl hover:bg-blue-700 active:scale-95 transition-all">
           + Crear tema
         </button>
@@ -42,7 +42,7 @@ export default function ForumPage() {
           </div>
         ) : (
           topics.map(topic => (
-            <div key={topic.id} onClick={() => navigate(`/topic/${topic.id}`)}
+            <div key={topic.id} onClick={() => navigate(`/forum/topic/${topic.id}`)}
               className="card cursor-pointer hover:shadow-md transition-all active:scale-95">
 
               {topic.imageUrl && (
@@ -83,7 +83,7 @@ export default function ForumPage() {
       </div>
 
       {/* Botón flotante */}
-      <button onClick={() => navigate('/new')}
+      <button onClick={() => navigate('/forum/new')}
         className="fixed bottom-24 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-blue-700 active:scale-95 transition-all">
         +
       </button>

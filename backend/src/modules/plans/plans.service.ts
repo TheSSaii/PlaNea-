@@ -55,8 +55,8 @@ export class PlansService {
 
     return this.prisma.plan.findMany({
       where: whereClause,
-      orderBy: { eventAt: 'desc' },
       include: { subplans: { orderBy: { order: 'asc' } } },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -87,6 +87,7 @@ export class PlansService {
     if (dto.description != null) data.description = dto.description;
     if (dto.peopleCount != null) data.peopleCount = Number(dto.peopleCount);
     if (dto.budgetCents != null) data.budgetCents = Number(dto.budgetCents);
+    if (dto.eventAt != null) data.eventAt = new Date(dto.eventAt);
     if (dto.createdById) {
       data.createdBy = { connect: { id: await this.getCreatedById(dto.createdById) } };
     }
@@ -96,10 +97,6 @@ export class PlansService {
       data.status = requestedStatus;
     }
 
-    if (dto.eventAt) {
-      data.eventAt = new Date(dto.eventAt);
-      data.status = this.calcStatus(data.eventAt);
-    }
 
     return this.prisma.plan.update({
       where: { id },

@@ -1,185 +1,135 @@
-import AuthLayout from "../components/AuthLayout"
-import AuthButton from "../components/AuthButton"
-import { Link, useNavigate } from "react-router-dom"
-import { useState } from "react"
-import { loginUser } from "../api/api"
+import { type FormEvent, type KeyboardEvent, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { loginUser } from '../api/api';
+import AuthButton from '../components/AuthButton';
+import AuthLayout from '../components/AuthLayout';
+import { useAuth } from '../context/AuthContext';
+import { Input } from '../../../shared/ui';
 
-const LoginPage = () => {
-
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const navigate = useNavigate()
-  const handleLogin = async () => {
-
-  if (!email || !password) {
-    alert("Completa todos los campos")
-    return
+function getErrorMessage(error: unknown): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: { status?: number } }).response?.status === 'number'
+  ) {
+    const status = (error as { response: { status: number } }).response.status;
+    if (status === 401) return 'Correo o contraseña incorrectos';
   }
+  return 'Ocurrió un error al iniciar sesión';
+}
 
-  try {
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const response = await loginUser({
-      email,
-      password
-    })
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const formRef = useRef<HTMLFormElement>(null);
 
-    console.log(response)
+  const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter' || submitting) return;
+    event.preventDefault();
+    formRef.current?.requestSubmit();
+  };
 
-    localStorage.setItem(
-      "token",
-      response.accessToken
-    )
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(response.user)
-    )
+    const normalizedEmail = email.trim().toLowerCase();
 
-    navigate("/mapa", { replace: true })
-
-  } catch (error: any) {
-
-    console.error(error)
-
-    if (error.response?.status === 401) {
-      alert("Correo o contraseÃ±a incorrectos")
-      return
+    if (!normalizedEmail || !password) {
+      setError('Completa todos los campos');
+      return;
     }
 
-    alert("OcurriÃ³ un error al iniciar sesiÃ³n")
-  }
-}
+    if (password.length < 4 || password.length > 12) {
+      setError('La contraseña debe tener entre 4 y 12 caracteres');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response = await loginUser({ email: normalizedEmail, password });
+
+      if (!response?.accessToken) {
+        setError('El servidor no devolvió un token válido');
+        return;
+      }
+
+      flushSync(() => login(response));
+      navigate('/mapa', { replace: true });
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <AuthLayout>
+      <form ref={formRef} onSubmit={handleSubmit} className="auth-form" noValidate>
+        <div className="auth-logo">Q</div>
 
-      <div className="flex flex-col gap-6">
-
-        {/* LOGO */}
-        <div className="flex justify-center">
-          <div
-            className="
-              w-20
-              h-20
-              bg-blue-500
-              rounded-full
-              flex
-              items-center
-              justify-center
-              text-white
-              text-3xl
-              font-bold
-            "
-          >
-            Q
-          </div>
+        <div>
+          <h1 className="auth-title">Iniciar sesión</h1>
+          <p className="auth-subtitle">Bienvenido nuevamente</p>
         </div>
 
-        {/* TITLE */}
-        <div className="text-center">
-
-          <h1 className="text-4xl font-bold text-gray-800">
-            Iniciar sesiÃ³n
-          </h1>
-
-          <p className="text-gray-500 mt-2">
-            Bienvenido nuevamente
-          </p>
-
-        </div>
-
-        {/* INPUTS */}
-        <div className="flex flex-col gap-4">
-
-          <input
+        <div className="auth-fields">
+          <Input
             type="email"
-            placeholder="Correo electrÃ³nico"
+            name="email"
+            autoComplete="email"
+            placeholder="Correo electrónico"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="
-              w-full
-              border
-              border-gray-200
-              rounded-2xl
-              px-4
-              py-4
-              text-gray-700
-              outline-none
-              focus:ring-2
-              focus:ring-blue-500
-            "
+            onKeyDown={submitOnEnter}
           />
 
-          {/* PASSWORD */}
-          <div className="relative">
-
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="ContraseÃ±a"
+          <div className="input-password-wrap">
+            <Input
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              autoComplete="current-password"
+              placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="
-                w-full
-                border
-                border-gray-200
-                rounded-2xl
-                px-4
-                py-4
-                pr-14
-                text-gray-700
-                outline-none
-                focus:ring-2
-                focus:ring-blue-500
-              "
+              onKeyDown={submitOnEnter}
             />
-
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="
-                absolute
-                right-4
-                top-1/2
-                -translate-y-1/2
-                text-gray-500
-              "
+              onClick={() => setShowPassword((v) => !v)}
+              className="input-password-toggle"
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
             >
-              {showPassword ? (
-                <span aria-hidden="true">Ocultar</span>
-              ) : (
-                <span aria-hidden="true">Ver</span>
-              )}
+              {showPassword ? 'Ocultar' : 'Ver'}
             </button>
-
           </div>
-
         </div>
 
-        {/* BUTTON */}
-        <AuthButton
-        text="Iniciar sesiÃ³n"
-        onClick={handleLogin}
-        />
+        {error && (
+          <p className="auth-error" role="alert">
+            {error}
+          </p>
+        )}
 
-        {/* REGISTER */}
-        <p className="text-center text-gray-500">
+        <AuthButton type="submit" text={submitting ? 'Ingresando...' : 'Iniciar sesión'} disabled={submitting} />
 
-          Â¿No tienes cuenta?{" "}
-
-          <Link
-            to="/register"
-            className="text-blue-600 font-medium"
-          >
+        <p className="auth-footer">
+          ¿No tienes cuenta?{' '}
+          <Link to="/register" className="auth-link">
             Crear cuenta
           </Link>
-
         </p>
-
-      </div>
-
+      </form>
     </AuthLayout>
-  )
+  );
 }
-
-export default LoginPage

@@ -245,7 +245,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   bottomSheet: {
     position: 'absolute',
-    bottom: 68,
+    bottom: 'calc(var(--nav-height) + var(--bottom-safe))',
     left: 0,
     right: 0,
     zIndex: 1001,

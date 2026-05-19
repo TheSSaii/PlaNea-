@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { CreatePlanPayload, TransportType } from '../types/plan.types';
 import { planService } from '../services/planService';
 import BottomNav from '../components/BottomNav';
+import { BackButton, Button, FormCard, Input, PageContent, PageHeader, PageShell } from '../../../shared/ui';
 
 const TRANSPORT_OPTIONS: { value: TransportType; label: string; icon: string }[] = [
   { value: 'WALKING',  label: 'A pie',              icon: 'A' },
@@ -46,48 +47,32 @@ export default function CreatePlanPage() {
     : new Date(form.scheduledAt) > new Date() ? 'Futuro' : 'Pasado';
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28">
+    <PageShell>
 
-      {/* ── Header ── */}
-      <header className="bg-white px-4 pt-12 pb-4 border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100
-                       hover:bg-slate-200 transition-colors"
-          >
-            <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor"
-                 strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-          <div>
-            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest leading-none">quePlan</p>
-            <h1 className="text-xl font-bold text-slate-900">Crear plan</h1>
+      <PageHeader>
+        <div className="page-header-row">
+          <BackButton onClick={() => navigate(-1)} />
+          <div className="page-title-copy">
+            <p className="page-eyebrow">QuePlan</p>
+            <h1 className="page-title text-xl">Crear plan</h1>
           </div>
         </div>
-      </header>
+      </PageHeader>
 
-      <main className="max-w-lg mx-auto px-4 pt-6 flex flex-col gap-4">
+      <PageContent>
 
         {/* Nombre */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-2">
-            Nombre del plan
-          </label>
-          <input
+        <FormCard label="Nombre del plan">
+          <Input
             value={form.name}
-            onChange={e => set('name', e.target.value)}
+            onChange={(e) => set('name', e.target.value)}
             placeholder="Ej: Noche con amigos"
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3
-                       text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
-                       focus:border-transparent placeholder:text-slate-400 transition-all"
           />
-        </div>
+        </FormCard>
 
         {/* Personas + Presupuesto */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div className="form-card">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-3">
               Número de personas
             </label>
@@ -109,7 +94,7 @@ export default function CreatePlanPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div className="form-card">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-3">
               Presupuesto total
             </label>
@@ -129,7 +114,7 @@ export default function CreatePlanPage() {
         </div>
 
         {/* Transporte */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div className="form-card">
           <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-3">
             Transporte
           </label>
@@ -153,7 +138,7 @@ export default function CreatePlanPage() {
         </div>
 
         {/* Fecha y Hora */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div className="form-card">
           <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-2">
             Fecha y Hora
           </label>
@@ -209,7 +194,7 @@ export default function CreatePlanPage() {
 
         {/* Estado del plan label (cuando no hay fecha) */}
         {!statusLabel && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div className="form-card">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">
               Estado del plan
             </p>
@@ -230,26 +215,12 @@ export default function CreatePlanPage() {
         )}
 
         {/* Botón crear */}
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl
-                     hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60
-                     transition-all shadow-lg shadow-blue-200 text-sm"
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-              </svg>
-              Creando plan...
-            </span>
-          ) : 'Crear plan'}
-        </button>
-      </main>
+        <Button variant="primary" size="lg" fullWidth onClick={handleSubmit} disabled={loading}>
+          {loading ? 'Creando plan...' : 'Crear plan'}
+        </Button>
+      </PageContent>
 
       <BottomNav />
-    </div>
+    </PageShell>
   );
 }

@@ -1,6 +1,1 @@
-.forum-root,
-.forum-root body {
-  background-color: #f8fafc;
-  color: #0f172a;
-  font-family: "Plus Jakarta Sans", sans-serif;
-}
+/* Forum uses global design tokens from index.css */

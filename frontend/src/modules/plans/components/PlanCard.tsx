@@ -68,13 +68,13 @@ export default function PlanCard({ plan, onUpdate }: Props) {
   return (
     <article
       onClick={() => navigate(`/plans/${plan.id}`)}
-      className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/10 active:scale-[0.99]"
+      className="content-card group"
     >
       <div className="bg-gradient-to-r from-slate-950 to-blue-700 px-5 py-4 text-white">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-blue-100">Plan</p>
-            <h3 className="mt-1 truncate text-lg font-black tracking-tight">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-100">Plan</p>
+            <h3 className="mt-1 truncate text-lg font-semibold tracking-tight">
               {plan.name}
             </h3>
             <p className="mt-2 flex items-center gap-1.5 text-xs font-bold text-blue-100">

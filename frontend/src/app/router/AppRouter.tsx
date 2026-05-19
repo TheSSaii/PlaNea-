@@ -1,5 +1,7 @@
 import type { ReactElement } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../modules/auth/context/AuthContext';
 import AdminPage from '../../modules/admin/pages/AdminPage';
 import LoginPage from '../../modules/auth/pages/LoginPage';
 import RegisterPage from '../../modules/auth/pages/RegisterPage';
@@ -13,22 +15,49 @@ import { MapPage } from '../../modules/plans/pages/MapPage';
 import PlanDetailPage from '../../modules/plans/pages/PlanDetailPage';
 import PlansPage from '../../modules/plans/pages/PlansPage';
 
-function isAuthenticated() {
-  return Boolean(localStorage.getItem('token'));
-}
-
 function ProtectedRoute({ children }: { children: ReactElement }) {
-  return isAuthenticated() ? children : <Navigate to="/login" replace />;
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return children;
 }
 
 function PublicRoute({ children }: { children: ReactElement }) {
-  return isAuthenticated() ? <Navigate to="/mapa" replace /> : children;
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/mapa', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (isAuthenticated) {
+    return null;
+  }
+
+  return children;
+}
+
+function HomeRedirect() {
+  const { isAuthenticated } = useAuth();
+  return <Navigate to={isAuthenticated ? '/mapa' : '/login'} replace />;
 }
 
 export function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={isAuthenticated() ? '/mapa' : '/login'} replace />} />
+      <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/mapa" element={<ProtectedRoute><MapPage /></ProtectedRoute>} />
@@ -41,7 +70,7 @@ export function AppRouter() {
       <Route path="/forum/topic/:id" element={<ProtectedRoute><ForumTopicDetail /></ProtectedRoute>} />
       <Route path="/forum/new" element={<ProtectedRoute><ForumNewTopic /></ProtectedRoute>} />
       <Route path="/forum/admin" element={<ProtectedRoute><ForumAdminPage /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to={isAuthenticated() ? '/mapa' : '/login'} replace />} />
+      <Route path="*" element={<HomeRedirect />} />
     </Routes>
   );
 }

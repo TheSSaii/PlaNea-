@@ -1,12 +1,28 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import type { Topic } from '../types/forum.types';
-import { getTopicById, addComment, toggleLike, getLikes } from '../api/forum.api';
-import BottomNav from '../../plans/components/BottomNav';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import type { Topic } from "../types/forum.types";
+import {
+  getTopicById,
+  addComment,
+  toggleLike,
+  getLikes,
+} from "../api/forum.api";
+import BottomNav from "../../plans/components/BottomNav";
+import {
+  Avatar,
+  BackButton,
+  Button,
+  Input,
+  Textarea,
+  LoadingScreen,
+  PageContent,
+  PageHeader,
+  PageShell,
+} from "../../../shared/ui";
 
 function getStoredUser(): { id?: string; name?: string | null } | null {
   try {
-    const raw = localStorage.getItem('user');
+    const raw = localStorage.getItem("user");
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -18,17 +34,21 @@ export default function TopicDetail() {
   const navigate = useNavigate();
   const [topic, setTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState(true);
-  const [commentText, setCommentText] = useState('');
+  const [commentText, setCommentText] = useState("");
   const storedUser = getStoredUser();
-  const [author, setAuthor] = useState(storedUser?.name ?? '');
+  const [author, setAuthor] = useState(storedUser?.name ?? "");
   const [sending, setSending] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [username, setUsername] = useState(() => localStorage.getItem('forum_username') || '');
+  const [username, setUsername] = useState(
+    () => localStorage.getItem("forum_username") || "",
+  );
 
   useEffect(() => {
     if (!id) return;
-    getTopicById(id).then(setTopic).finally(() => setLoading(false));
+    getTopicById(id)
+      .then(setTopic)
+      .finally(() => setLoading(false));
   }, [id]);
 
   useEffect(() => {
@@ -42,9 +62,9 @@ export default function TopicDetail() {
   const handleLike = async () => {
     let name = username || author;
     if (!name) {
-      name = prompt('Cual es tu nombre?') || '';
+      name = prompt("¿Cuál es tu nombre?") || "";
       if (!name.trim()) return;
-      localStorage.setItem('forum_username', name);
+      localStorage.setItem("forum_username", name);
       setUsername(name);
     }
     try {
@@ -52,164 +72,165 @@ export default function TopicDetail() {
       setLiked(data.liked);
       setLikeCount(data.count);
     } catch (e) {
-      console.error('Error al dar like:', e);
+      console.error("Error al dar like:", e);
     }
   };
 
   const handleComment = async () => {
     if (!commentText.trim() || !author.trim() || !id) return;
     setSending(true);
-    await addComment(id, { content: commentText, author, authorId: storedUser?.id });
+    await addComment(id, {
+      content: commentText,
+      author,
+      authorId: storedUser?.id,
+    });
     const updated = await getTopicById(id);
     setTopic(updated);
-    setCommentText('');
+    setCommentText("");
     setSending(false);
   };
 
   if (loading) {
-    return (
-      <div className="page-shell flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-slate-400">
-          <span className="h-8 w-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
-          <p className="text-sm font-medium">Cargando publicacion...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Cargando publicación..." />;
   }
 
   if (!topic) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-400 text-sm">Tema no encontrado</p>
-      </div>
+      <PageShell className="page-shell--center">
+        <p className="text-sm text-slate-500">Tema no encontrado</p>
+      </PageShell>
     );
   }
 
-  const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
   return (
-    <div className="page-shell bg-[radial-gradient(circle_at_top,#eff6ff_0,#f8fafc_34rem)] pb-56">
-      <div className="page-header">
-        <div className="page-header-inner justify-start">
-          <button
-            onClick={() => navigate('/forum')}
-            className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 hover:bg-slate-200 transition-colors"
-          >
-            <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div className="min-w-0">
-            <p className="text-xs text-blue-600 font-bold uppercase tracking-widest">Comunidad</p>
-            <h1 className="truncate text-xl font-black text-slate-950">Publicacion</h1>
+    <PageShell className="page-shell--composer">
+      <PageHeader>
+        <div className="page-header-row">
+          <BackButton onClick={() => navigate("/forum")} />
+          <div className="page-title-copy min-w-0">
+            <p className="page-eyebrow">Comunidad</p>
+            <h1 className="page-title truncate text-xl">Publicación</h1>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
-      <div className="page-content flex flex-col gap-4">
-        <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-blue-900/5">
+      <PageContent>
+        <article className="surface-card overflow-hidden">
           {topic.imageUrl && (
-            <div className="relative h-64 overflow-hidden bg-slate-100">
-              <img src={`${apiUrl}${topic.imageUrl}`} alt="imagen del topic" className="h-full w-full object-cover" />
-              <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/40 to-transparent" />
+            <div className="content-card-media h-64">
+              <img
+                src={`${apiUrl}${topic.imageUrl}`}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </div>
           )}
 
           <div className="p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="soft-icon ring-4 ring-blue-50">{topic.author?.name?.[0]?.toUpperCase() ?? '?'}</div>
+            <div className="mb-4 flex items-center gap-3">
+              <Avatar name={topic.author?.name} size="md" />
               <div className="min-w-0 flex-1">
-                <p className="font-bold text-sm text-slate-900 truncate">{topic.author?.name ?? 'Anonimo'}</p>
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {topic.author?.name ?? "Anónimo"}
+                </p>
                 <p className="text-xs text-slate-400">
-                  {new Date(topic.createdAt).toLocaleDateString('es-CO', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
+                  {new Date(topic.createdAt).toLocaleDateString("es-CO", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </p>
               </div>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-blue-600">Foro</span>
             </div>
 
-            <h2 className="font-black text-slate-950 text-xl leading-tight mb-3">{topic.title}</h2>
-            <p className="whitespace-pre-line text-slate-600 text-sm leading-7">{topic.content}</p>
+            <h2 className="mb-3 text-xl font-semibold leading-tight text-slate-950">
+              {topic.title}
+            </h2>
+            <p className="whitespace-pre-line text-sm leading-7 text-slate-600">
+              {topic.content}
+            </p>
 
-            <div className="flex items-center gap-3 mt-5 pt-4 border-t border-slate-100">
+            <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
               <button
+                type="button"
                 onClick={handleLike}
-                className={`inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-black transition-all active:scale-95 ${
-                  liked ? 'bg-rose-50 text-rose-500' : 'bg-slate-50 text-slate-500 hover:bg-rose-50 hover:text-rose-500'
-                }`}
+                className={`btn btn-sm ${liked ? "btn-danger" : "btn-secondary"}`}
               >
-                <span className="inline-icon bg-white text-current">L</span>
                 {likeCount} Me gusta
               </button>
-              <span className="inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-500">
-                <span className="inline-icon bg-white">C</span>
+              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600">
                 {topic.comments?.length ?? 0} comentarios
               </span>
             </div>
           </div>
         </article>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5">
+        <section className="form-card">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-black text-slate-950 text-base">Comentarios</h3>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+            <h3 className="text-base font-semibold text-slate-950">
+              Comentarios
+            </h3>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
               {topic.comments?.length ?? 0}
             </span>
           </div>
 
-          {!topic.comments || topic.comments.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-              <p className="text-slate-500 text-sm font-bold">Se el primero en comentar</p>
-              <p className="mt-1 text-xs text-slate-400">Tu respuesta puede arrancar la conversacion.</p>
+          {!topic.comments?.length ? (
+            <div className="upload-zone min-h-28">
+              <p className="upload-zone-title">Sé el primero en comentar</p>
+              <p className="upload-zone-hint">
+                Tu respuesta puede arrancar la conversación.
+              </p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
               {topic.comments.map((comment) => (
                 <div key={comment.id} className="flex gap-3">
-                  <div className="w-9 h-9 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs flex-shrink-0">
-                    {comment.author?.name?.[0]?.toUpperCase() ?? '?'}
-                  </div>
-                  <div className="bg-slate-50 border border-slate-100 rounded-2xl px-3 py-2.5 flex-1 min-w-0">
-                    <p className="font-bold text-xs text-slate-900 mb-1">{comment.author?.name ?? 'Anonimo'}</p>
-                    <p className="text-sm leading-relaxed text-slate-600">{comment.content}</p>
+                  <Avatar name={comment.author?.name} size="sm" />
+                  <div className="min-w-0 flex-1 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                    <p className="mb-1 text-xs font-semibold text-slate-900">
+                      {comment.author?.name ?? "Anónimo"}
+                    </p>
+                    <p className="text-sm leading-relaxed text-slate-600">
+                      {comment.content}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </section>
-      </div>
+      </PageContent>
 
-      <div className="fixed bottom-[5.25rem] left-0 right-0 border-t border-slate-200/80 bg-white/95 px-4 py-3 shadow-2xl shadow-slate-900/10 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[34rem] flex-col gap-2">
-          <input
-            placeholder="Tu nombre"
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            className="input-field"
+      <div className="sticky-composer">
+        <Input
+          placeholder="Tu nombre"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+        />
+        <div className="composer-row">
+          <Textarea
+            placeholder="Escribe un comentario..."
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            rows={3}
           />
-          <div className="flex gap-2">
-            <input
-              placeholder="Escribe un comentario..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              className="input-field"
-            />
-            <button
-              onClick={handleComment}
-              disabled={sending}
-              className="bg-blue-600 text-white font-black px-4 py-3 rounded-2xl hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
-            >
-              {sending ? '...' : 'Enviar'}
-            </button>
-          </div>
+          <Button
+            variant="primary"
+            size="md"
+            fullWidth
+            onClick={handleComment}
+            disabled={sending}
+          >
+            {sending ? "..." : "Enviar"}
+          </Button>
         </div>
       </div>
+
       <BottomNav />
-    </div>
+    </PageShell>
   );
 }

@@ -1,30 +1,16 @@
+import { Button } from '../../../shared/ui';
+
 type AuthButtonProps = {
-  text: string
-  onClick?: () => void
-}
+  text: string;
+  type?: 'button' | 'submit';
+  onClick?: () => void;
+  disabled?: boolean;
+};
 
-const AuthButton = ({
-  text,
-  onClick
-}: AuthButtonProps) => {
-
+export default function AuthButton({ text, type = 'button', onClick, disabled = false }: AuthButtonProps) {
   return (
-    <button
-      onClick={onClick}
-      className="
-        w-full
-        bg-blue-600
-        hover:bg-blue-700
-        text-white
-        font-semibold
-        py-4
-        rounded-2xl
-        transition
-      "
-    >
+    <Button type={type} onClick={onClick} disabled={disabled} variant="primary" size="lg" fullWidth>
       {text}
-    </button>
-  )
+    </Button>
+  );
 }
-
-export default AuthButton

@@ -59,8 +59,10 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend/src:/app/src     # Hot reload HMR
+      - ./frontend/src:/app/src
       - ./frontend/public:/app/public
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/package-lock.json:/app/package-lock.json
     depends_on:
       - backend
     networks:

@@ -15,7 +15,7 @@ COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
 EXPOSE 5173
-CMD ["./entrypoint.sh"]
+CMD ["sh", "./entrypoint.sh"]
 
 # Build de producción
 FROM base AS builder

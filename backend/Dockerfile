@@ -23,7 +23,7 @@ EXPOSE 3000
 EXPOSE 9229
 
 # El volumen ./backend/src:/app/src sobreescribe src/ en runtime (hot reload)
-CMD ["./entrypoint.sh"]
+CMD ["sh", "./entrypoint.sh"]
 
 # ── Builder (producción) ──────────────────────────────────
 FROM base AS builder
@@ -43,4 +43,4 @@ COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
 EXPOSE 3000
-CMD ["./entrypoint.sh"]
+CMD ["sh", "./entrypoint.sh"]

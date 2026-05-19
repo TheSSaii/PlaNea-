@@ -1,0 +1,13 @@
+// backend/src/places/places.module.ts
+import { Module } from '@nestjs/common';
+import { PlacesController } from './places.controller';
+import { PlacesService } from './places.service';
+import { PrismaModule } from '../../prisma/prisma.module';
+ 
+@Module({
+  imports: [PrismaModule],
+  controllers: [PlacesController],
+  providers: [PlacesService],
+  exports: [PlacesService],
+})
+export class PlacesModule {}

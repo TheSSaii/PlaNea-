@@ -22,8 +22,8 @@ export class PlansController {
   }
 
   @Get()
-  findAll(@Query('status') status?: PlanStatus) {
-    return this.plansService.findAll(status);
+  findAll(@Query('status') status?: PlanStatus, @Query('userId') userId?: string,) {
+    return this.plansService.findAll(status, userId);
   }
   
   @Get(':id')

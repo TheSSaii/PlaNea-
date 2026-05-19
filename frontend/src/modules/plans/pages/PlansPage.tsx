@@ -23,11 +23,27 @@ export default function PlansPage() {
   const [tab, setTab] = useState<'active' | 'past'>('active');
   const navigate = useNavigate();
 
+   // NUEVO: Recuperar el ID del usuario actual desde el almacenamiento local
+  const getUserId = (): string | undefined => {
+    const sessionUser = localStorage.getItem('user'); // Revisa si tus colaboradores usan esta clave o 'currentUser'
+    if (!sessionUser) return undefined;
+    try {
+      const parsed = JSON.parse(sessionUser);
+      return parsed.id || parsed.userId;
+    } catch {
+      return undefined;
+    }
+  };
+
   const load = async () => {
     setLoading(true);
     setError('');
     try {
-      const all = await planService.getAll();
+      const userId = getUserId();
+      
+      // Enviamos el userId al servicio (si no hay sesión, se enviará undefined)
+      const all = await planService.getAll(userId);
+      
       setActive(all.filter((p) => p.status === 'FUTURE' || p.status === 'DRAFT'));
       setPast(all.filter((p) => p.status === 'PAST'));
     } catch {

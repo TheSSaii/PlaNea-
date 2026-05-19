@@ -46,11 +46,18 @@ export class PlansService {
     });
   }
 
-  async findAll(status?: string) {
-    const whereClause =
-      status && Object.values(PlanStatus).includes(status as PlanStatus)
-        ? { status: status as PlanStatus }
-        : {};
+  async findAll(status?: string, userId?: string) {
+    const whereClause: any ={};
+
+    // Si pasan un estatus válido, lo añadimos al filtro
+    if (status && Object.values(PlanStatus).includes(status as PlanStatus)) {
+      whereClause.status = status as PlanStatus;
+    }
+
+    // NUEVO: Si pasan el ID de un usuario, filtramos por su creador
+    if (userId) {
+      whereClause.createdById = userId;
+    }
 
     return this.prisma.plan.findMany({
       where: whereClause,

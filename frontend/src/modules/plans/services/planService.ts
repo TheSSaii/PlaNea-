@@ -96,10 +96,16 @@ function adaptPayload(payload: PlanPayload, createdById?: string) {
 }
 
 export const planService = {
-  getAll: (status?: string) =>
-    apiClient.get<RawPlan[]>('/plans', { params: status ? { status } : {} })
-      .then(r => r.data.map(adaptPlan)),
+  getAll: (userId?: string, status?: string) => {
+    const queryParams: Record<string, string> = {};
+    if (userId) queryParams.userId = userId;
+    if (status) queryParams.status = status;
 
+    return apiClient
+      .get<RawPlan[]>('/plans', { params: queryParams })
+      .then(r => r.data.map(adaptPlan));
+  },
+  
   getOne: (id: string) =>
     apiClient.get<RawPlan>(`/plans/${id}`)
       .then(r => adaptPlan(r.data)),

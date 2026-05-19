@@ -5,6 +5,43 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ForumService {
   constructor(private prisma: PrismaService) {}
 
+  private readonly fallbackPasswordHash =
+    '$2b$10$7YvS2S2z6QeHG5A7pPScduw1nGG05f5jWbK5gBcZAw5XnbXgq8m7K';
+
+  private normalizeGuestEmail(name: string) {
+    const safeName = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '.')
+      .replace(/^\.+|\.+$/g, '') || 'anonimo';
+
+    return `${safeName}@guest.local`;
+  }
+
+  private async getAuthorConnect(authorName: string, authorId?: string) {
+    if (authorId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: authorId },
+        select: { id: true },
+      });
+
+      if (user) return { connect: { id: user.id } };
+    }
+
+    const email = this.normalizeGuestEmail(authorName);
+
+    return {
+      connectOrCreate: {
+        where: { email },
+        create: {
+          email,
+          passwordHash: this.fallbackPasswordHash,
+          name: authorName,
+        },
+      },
+    };
+  }
+
   // ── Temas ──────────────────────────────────────────────
 
   async getAllTopics() {
@@ -23,24 +60,19 @@ export class ForumService {
     });
   }
 
-  async createTopic(title: string, content: string, guestAuthor: string, imageUrl?: string) {
+  async createTopic(
+    title: string,
+    content: string,
+    guestAuthor: string,
+    imageUrl?: string,
+    authorId?: string,
+  ) {
     return this.prisma.forumTopic.create({
       data: {
         title,
         content,
         imageUrl,
-        // Usamos un User "guest" temporal — el authorId lo manejamos
-        // con un usuario invitado fijo hasta que haya auth real
-        author: {
-          connectOrCreate: {
-            where: { email: `${guestAuthor.toLowerCase().replace(/\s+/g, '.')}@guest.local` },
-            create: {
-              email: `${guestAuthor.toLowerCase().replace(/\s+/g, '.')}@guest.local`,
-              passwordHash: 'guest',
-              name: guestAuthor,
-            },
-          },
-        },
+        author: await this.getAuthorConnect(guestAuthor, authorId),
       },
       include: {
         comments: true,
@@ -84,7 +116,7 @@ export class ForumService {
 
   // ── Comentarios ────────────────────────────────────────
 
-  async addComment(topicId: string, content: string, guestAuthor: string) {
+  async addComment(topicId: string, content: string, guestAuthor: string, authorId?: string) {
     const topic = await this.prisma.forumTopic.findUnique({ where: { id: topicId } });
     if (!topic) return null;
 
@@ -92,16 +124,7 @@ export class ForumService {
       data: {
         content,
         topic: { connect: { id: topicId } },
-        author: {
-          connectOrCreate: {
-            where: { email: `${guestAuthor.toLowerCase().replace(/\s+/g, '.')}@guest.local` },
-            create: {
-              email: `${guestAuthor.toLowerCase().replace(/\s+/g, '.')}@guest.local`,
-              passwordHash: 'guest',
-              name: guestAuthor,
-            },
-          },
-        },
+        author: await this.getAuthorConnect(guestAuthor, authorId),
       },
       include: { author: { select: { id: true, name: true } } },
     });

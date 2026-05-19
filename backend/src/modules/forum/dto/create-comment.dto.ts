@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateCommentDto {
     @IsNotEmpty({ message: 'El comentario no puede estar vacío' })
@@ -9,4 +9,8 @@ export class CreateCommentDto {
     @IsNotEmpty({ message: 'El autor no puede estar vacío' })
     @IsString({ message: 'El autor debe ser texto' })
     author: string;
+
+    @IsOptional()
+    @IsUUID()
+    authorId?: string;
 }

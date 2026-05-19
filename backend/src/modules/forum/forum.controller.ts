@@ -46,7 +46,7 @@ export class ForumController {
       return { message: `El usuario ${body.author} está bloqueado y no puede crear temas` };
     }
     const imageUrl = file ? `/uploads/${file.filename}` : undefined;
-    return this.forumService.createTopic(body.title, body.content, body.author, imageUrl);
+    return this.forumService.createTopic(body.title, body.content, body.author, imageUrl, body.authorId);
   }
 
   @Get('topics/:id')
@@ -82,7 +82,7 @@ export class ForumController {
     if (blocked) {
       return { message: `El usuario ${body.author} está bloqueado y no puede comentar` };
     }
-    const comment = await this.forumService.addComment(id, body.content, body.author);
+    const comment = await this.forumService.addComment(id, body.content, body.author, body.authorId);
     if (!comment) return { message: 'Tema no encontrado, no se pudo comentar' };
     return comment;
   }

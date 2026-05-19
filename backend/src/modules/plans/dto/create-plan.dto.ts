@@ -25,5 +25,6 @@ export class CreatePlanDto {
   eventAt?: string;
 
   @IsUUID()
-  createdById!: string; // Obligatorio para vincularlo al User
+  @IsOptional()
+  createdById?: string;
 }

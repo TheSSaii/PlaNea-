@@ -8,9 +8,8 @@ import { UpdatePlanDto } from './dto/update-plan.dto';
 export class PlansService {
   constructor(private prisma: PrismaService) {}
 
-  private calcStatus(date: Date): PlanStatus {
-    return date > new Date() ? PlanStatus.OPEN : PlanStatus.FINALIZED;
-  }
+  private readonly fallbackPasswordHash =
+    '$2b$10$7YvS2S2z6QeHG5A7pPScduw1nGG05f5jWbK5gBcZAw5XnbXgq8m7K';
 
   private async getCreatedById(createdById?: string) {
     if (createdById) return createdById;
@@ -20,7 +19,7 @@ export class PlansService {
       update: {},
       create: {
         email: 'dev@queplan.local',
-        passwordHash: 'development-only-user',
+        passwordHash: this.fallbackPasswordHash,
         name: 'Usuario Desarrollo',
       },
       select: { id: true },

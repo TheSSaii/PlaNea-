@@ -32,12 +32,12 @@ describe('UsersService', () => {
     expect(service).toBeDefined();
   });
 
-  it('creates a user through the repository', () => {
+  it('creates a user through the repository', async () => {
     const savedUser = buildUser();
-    repository.findByEmail.mockReturnValue(null);
+    repository.findByEmail.mockResolvedValue(null);
     repository.save.mockImplementation((user) => Promise.resolve(user));
 
-    const user = service.create({
+    const user = await service.create({
       id: savedUser.id,
       email: '  TEST@EXAMPLE.COM ',
       passwordHash: savedUser.passwordHash,
@@ -49,25 +49,25 @@ describe('UsersService', () => {
     expect(user.email).toBe('test@example.com');
   });
 
-  it('fails when the email is already registered', () => {
-    repository.findByEmail.mockReturnValue(buildUser());
+  it('fails when the email is already registered', async () => {
+    repository.findByEmail.mockResolvedValue(buildUser());
 
-    expect(() =>
+    await expect(
       service.create({
         id: 'user-2',
         email: 'test@example.com',
         passwordHash: '$2b$10$abcdefghijklmnopqrstuv123456789012345678901234567890',
         name: 'Another User',
       }),
-    ).toThrow('Email is already registered.');
+    ).rejects.toThrow('Email is already registered.');
   });
 
-  it('updates a profile and persists the new version', () => {
+  it('updates a profile and persists the new version', async () => {
     const existingUser = buildUser();
-    repository.findById.mockReturnValue(existingUser);
-    repository.save.mockImplementation((user) => user);
+    repository.findById.mockResolvedValue(existingUser);
+    repository.save.mockImplementation((user) => Promise.resolve(user));
 
-    const updatedUser = service.updateProfile(existingUser.id, {
+    const updatedUser = await service.updateProfile(existingUser.id, {
       name: ' Updated Name ',
     });
 

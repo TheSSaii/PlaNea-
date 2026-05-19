@@ -5,7 +5,7 @@ import { LoginAuthDto } from './login-auth.dto';
 export class RegisterAuthDto extends LoginAuthDto {
   @IsString()
   @IsNotEmpty()
-  @MinLength(8)
-  @MaxLength(72)
+  @MinLength(2)
+  @MaxLength(80)
   name!: string;
 }

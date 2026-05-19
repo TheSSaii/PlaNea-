@@ -36,6 +36,7 @@ services:
     ports:
       - "3000:3000"
       - "9229:9229"   # Debug port
+      - "5555:5555"   # Prisma Studio
     volumes:
       - ./backend/src:/app/src      # Hot reload
       - ./backend/prisma:/app/prisma

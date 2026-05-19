@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, MaxLength, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateTopicDto {
     @IsNotEmpty({ message: 'El título no puede estar vacío' })
@@ -15,4 +15,8 @@ export class CreateTopicDto {
     @IsNotEmpty({ message: 'El autor no puede estar vacío' })
     @IsString({ message: 'El autor debe ser texto' })
     author: string;
+
+    @IsOptional()
+    @IsUUID()
+    authorId?: string;
 }

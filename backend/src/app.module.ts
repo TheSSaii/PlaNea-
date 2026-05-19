@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { PlacesModule } from './modules/places/places.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -30,6 +31,7 @@ import { AppService } from './app.service';
     UsersModule,
     PlansModule,
     AdminModule,
+    PlacesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

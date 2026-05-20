@@ -40,6 +40,7 @@ export default function TopicDetail() {
   const [sending, setSending] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [username, setUsername] = useState(
     () => localStorage.getItem("forum_username") || "",
   );
@@ -87,6 +88,7 @@ export default function TopicDetail() {
     const updated = await getTopicById(id);
     setTopic(updated);
     setCommentText("");
+    setComposerOpen(false);
     setSending(false);
   };
 
@@ -105,7 +107,7 @@ export default function TopicDetail() {
   const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
   return (
-    <PageShell className="page-shell--composer">
+    <PageShell>
       <PageHeader>
         <div className="page-header-row">
           <BackButton onClick={() => navigate("/forum")} />
@@ -178,6 +180,38 @@ export default function TopicDetail() {
             </span>
           </div>
 
+          <div
+            className={`comment-composer ${composerOpen || commentText ? "comment-composer--open" : ""}`}
+          >
+            {(composerOpen || commentText || !author.trim()) && (
+              <Input
+                placeholder="Tu nombre"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                className="comment-composer-name"
+              />
+            )}
+            <div className="comment-composer-row">
+              <Textarea
+                placeholder="Escribe un comentario..."
+                value={commentText}
+                onFocus={() => setComposerOpen(true)}
+                onChange={(e) => setCommentText(e.target.value)}
+                rows={composerOpen || commentText ? 3 : 1}
+                className="comment-composer-textarea"
+              />
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleComment}
+                disabled={sending || !commentText.trim() || !author.trim()}
+                className="comment-composer-button"
+              >
+                {sending ? "..." : "Enviar"}
+              </Button>
+            </div>
+          </div>
+
           {!topic.comments?.length ? (
             <div className="upload-zone min-h-28">
               <p className="upload-zone-title">Sé el primero en comentar</p>
@@ -204,31 +238,6 @@ export default function TopicDetail() {
           )}
         </section>
       </PageContent>
-
-      <div className="sticky-composer">
-        <Input
-          placeholder="Tu nombre"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-        />
-        <div className="composer-row">
-          <Textarea
-            placeholder="Escribe un comentario..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            rows={3}
-          />
-          <Button
-            variant="primary"
-            size="md"
-            fullWidth
-            onClick={handleComment}
-            disabled={sending}
-          >
-            {sending ? "..." : "Enviar"}
-          </Button>
-        </div>
-      </div>
 
       <BottomNav />
     </PageShell>
